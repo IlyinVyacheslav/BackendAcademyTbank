@@ -1,15 +1,8 @@
 package backend.academy.rendering.transfromation;
 
-import backend.academy.rendering.Pixel;
 import backend.academy.rendering.Point;
 
 public class TransformationHorseHoe implements Transformation {
-    @SuppressWarnings("checkstyle:MagicNumber")
-    @Override
-    public Pixel defaultPixel() {
-        return new Pixel(13, 89, 210);
-    }
-
     @Override
     public Point apply(Point point) {
         double r = point.radius();

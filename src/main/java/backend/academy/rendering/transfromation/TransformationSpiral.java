@@ -1,14 +1,8 @@
 package backend.academy.rendering.transfromation;
 
-import backend.academy.rendering.Pixel;
 import backend.academy.rendering.Point;
 
 public class TransformationSpiral implements Transformation {
-    @SuppressWarnings("checkstyle:MagicNumber")
-    @Override
-    public Pixel defaultPixel() {
-        return new Pixel(255, 100, 50);
-    }
 
     @Override
     public Point apply(Point point) {

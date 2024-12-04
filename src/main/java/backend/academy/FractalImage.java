@@ -46,20 +46,21 @@ public record FractalImage(Pixel[] pixels, int width, int height) {
         Pixel pixel = this.getPixel(x, y);
 
         this.setPixel(x, y,
-            new Pixel((int) (pixel.r() * c), (int) (pixel.g() * c), (int) (pixel.b() * c), pixel.hitCount()));
+            new Pixel((int) (pixel.red() * c), (int) (pixel.green() * c), (int) (pixel.blue() * c), pixel.hitCount()));
     }
 
-    public void transformPixel(int x, int y, Pixel color) {
+    public void transformPixel(int x, int y, Pixel.RGB color) {
         if (!this.contains(x, y)) {
             return;
         }
 
         Pixel pixel = this.getPixel(x, y);
         if (pixel.hitCount() == 0) {
-            this.setPixel(x, y, new Pixel(color.r(), color.g(), color.b(), 1));
+            this.setPixel(x, y, new Pixel(color.red(), color.green(), color.blue(), 1));
         }
         this.setPixel(x, y,
-            new Pixel((pixel.r() + color.r()) / 2, (pixel.g() + color.g()) / 2, (pixel.b() + color.b()) / 2,
+            new Pixel((pixel.red() + color.red()) / 2, (pixel.green() + color.green()) / 2,
+                (pixel.blue() + color.blue()) / 2,
                 pixel.hitCount() + 1));
     }
 }

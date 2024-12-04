@@ -19,7 +19,7 @@ public class ImageUtils {
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
                 Pixel pixel = image.pixel(x, y).orElseGet(() -> new Pixel(0, 0, 0));
-                int rgb = (pixel.r() << RED_SHIFT) | (pixel.g() << GREEN_SHIFT) | pixel.b();
+                int rgb = (pixel.red() << RED_SHIFT) | (pixel.green() << GREEN_SHIFT) | pixel.blue();
                 bufferedImage.setRGB(x, y, rgb);
             }
         }

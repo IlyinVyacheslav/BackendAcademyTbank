@@ -1,5 +1,6 @@
 package backend.academy.rendering.affine;
 
+import backend.academy.rendering.Pixel;
 import backend.academy.rendering.Point;
 
 public record AffineTransformation(
@@ -8,7 +9,8 @@ public record AffineTransformation(
     double c,
     double d,
     double e,
-    double f) {
+    double f,
+    Pixel.RGB color) {
 
     private static double sumOfSquares(double... values) {
         double sum = 0.0;
