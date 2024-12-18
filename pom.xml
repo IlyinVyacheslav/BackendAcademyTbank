@@ -37,8 +37,8 @@
         <spotbugs-slf4j.version>1.5.0</spotbugs-slf4j.version>
         <spotbugs-maven-plugin.version>4.8.6.2</spotbugs-maven-plugin.version>
 
-        <pmd.version>7.4.0</pmd.version>
-        <maven-pmd-plugin.version>3.24.0</maven-pmd-plugin.version>
+        <pmd.version>7.5.0</pmd.version>
+        <maven-pmd-plugin.version>3.25.0</maven-pmd-plugin.version>
 
         <modernizer-maven-plugin.version>2.9.0</modernizer-maven-plugin.version>
 
@@ -188,6 +188,7 @@
         <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-generator-annprocess</artifactId>
+            <version>1.35</version>
         </dependency>
 
         <!-- Tests -->
@@ -489,6 +490,11 @@
                                 <groupId>org.projectlombok</groupId>
                                 <artifactId>lombok</artifactId>
                                 <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.openjdk.jmh</groupId>
+                                <artifactId>jmh-generator-annprocess</artifactId>
+                                <version>1.35</version>
                             </path>
                         </annotationProcessorPaths>
                     </configuration>
