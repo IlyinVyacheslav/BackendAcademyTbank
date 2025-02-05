@@ -1,0 +1,135 @@
+Rendering Parameters:
+Number of threads: 1
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 6110.3464 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 2
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 3568.9923 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 3
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 3100.0771 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 4
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2936.1094 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 5
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2903.592 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 6
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 3004.4081 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 7
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2412.791 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 8
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2649.8228 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 9
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2424.674 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 10
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2386.0247 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 11
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2437.9358 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 12
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2763.599 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 13
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2569.4697 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 14
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2753.1436 ms
+--------------------------------------------------
+Rendering Parameters:
+Number of threads: 15
+Image width: 800
+Image height: 800
+Max iterations: 10000
+Steps number: 200
+Affine transformations: 20
+Rendering time: 2620.6111 ms
+--------------------------------------------------
