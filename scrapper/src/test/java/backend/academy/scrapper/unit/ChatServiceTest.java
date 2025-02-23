@@ -191,4 +191,12 @@ class ChatServiceTest {
 
         assertThat(expectedLinks).isEqualTo(links);
     }
+
+    @Test
+    void updateLinkLastModified_ShouldThrowException_WhenLinkDoesNotExist() {
+        when(linkRepository.getLink(linkId)).thenReturn(null);
+
+        assertThatThrownBy(() -> chatService.updateLinkLastModifiedAt(linkId, null))
+                .isInstanceOf(LinkNotFoundException.class);
+    }
 }

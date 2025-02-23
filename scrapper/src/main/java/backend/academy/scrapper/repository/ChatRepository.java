@@ -10,10 +10,6 @@ import org.springframework.stereotype.Repository;
 public class ChatRepository {
     private final Map<Long, Chat> CHATS = new ConcurrentHashMap<>();
 
-    {
-        CHATS.put(1L, new Chat(1L));
-    }
-
     public Stream<Chat> getAllChatsAsStream() {
         return CHATS.values().stream();
     }

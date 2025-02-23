@@ -95,6 +95,9 @@ public class ChatService {
 
     public void updateLinkLastModifiedAt(Long id, String modifiedAt) {
         Link oldLink = linkRepository.getLink(id);
+        if (oldLink == null) {
+            throw new LinkNotFoundException(String.format("There is no link with id %d", id));
+        }
         linkRepository.updateLink(new Link(oldLink.id(), oldLink.url(), modifiedAt));
     }
 
