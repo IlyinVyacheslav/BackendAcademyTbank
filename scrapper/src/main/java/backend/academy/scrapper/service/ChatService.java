@@ -3,6 +3,8 @@ package backend.academy.scrapper.service;
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
+import backend.academy.scrapper.exc.ChatAlreadyExistsException;
+import backend.academy.scrapper.exc.ChatNotFoundException;
 import backend.academy.scrapper.exc.LinkAlreadyExistsException;
 import backend.academy.scrapper.exc.LinkNotFoundException;
 import backend.academy.scrapper.model.Chat;
@@ -27,16 +29,24 @@ public class ChatService {
     }
 
     public void registerChat(Long chatId) {
+        if (chatRepository.getChat(chatId) != null) {
+            throw new ChatAlreadyExistsException(chatId);
+        }
         chatRepository.addChat(new Chat(chatId));
     }
 
     public void deleteChat(Long chatId) {
-        chatRepository.removeChat(chatId);
+        if (!chatRepository.removeChat(chatId)) {
+            throw new ChatNotFoundException(chatId);
+        }
     }
 
     public ListLinksResponse getAllLinksFromChat(Long chatId) {
-        List<LinkInfo> linkInfoList = chatRepository.getAllLinksFromChat(chatId);
-        List<LinkResponse> linkResponses = linkInfoList.stream()
+        Chat chat = chatRepository.getChat(chatId);
+        if (chat == null) {
+            throw new ChatNotFoundException(chatId);
+        }
+        List<LinkResponse> linkResponses = chat.linksToFollow().stream()
                 .map(linkInfo -> {
                     Link link = linkRepository.getLink(linkInfo.linkId());
                     return new LinkResponse(link.id(), link.url(), linkInfo.tags(), linkInfo.filters());
@@ -53,6 +63,10 @@ public class ChatService {
         }
 
         Chat chat = chatRepository.getChat(chatId);
+        if (chat == null) {
+            throw new ChatNotFoundException(chatId);
+        }
+
         if (chat.containsUrl(link.id())) {
             throw new LinkAlreadyExistsException(chatId, url);
         }
@@ -63,6 +77,9 @@ public class ChatService {
     }
 
     public void deleteLinkFromChat(Long chatId, String url) {
+        if (chatRepository.getChat(chatId) == null) {
+            throw new ChatNotFoundException(chatId);
+        }
         Link link = linkRepository.getLinkByUrl(url);
         if (link == null) {
             throw new LinkNotFoundException(url);

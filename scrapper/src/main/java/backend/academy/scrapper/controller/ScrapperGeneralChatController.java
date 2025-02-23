@@ -32,7 +32,7 @@ public class ScrapperGeneralChatController {
     }
 
     @DeleteMapping("/tg-chat/{id}")
-    public ResponseEntity<?> deleteChat(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteChat(@PathVariable("id") Long id) {
         chatService.deleteChat(id);
         return ResponseEntity.ok("Чат успешно удалён");
     }
@@ -51,8 +51,8 @@ public class ScrapperGeneralChatController {
     }
 
     @DeleteMapping("/links")
-    public ResponseEntity<Void> deleteLinkFromChat(@RequestHeader("Tg-Chat-Id") Long id, @RequestBody String link) {
+    public ResponseEntity<String> deleteLinkFromChat(@RequestHeader("Tg-Chat-Id") Long id, @RequestBody String link) {
         chatService.deleteLinkFromChat(id, link);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok("Ссылка успешно удалена");
     }
 }
