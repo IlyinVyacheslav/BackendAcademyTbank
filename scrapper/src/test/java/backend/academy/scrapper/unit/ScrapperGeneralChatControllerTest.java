@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -17,6 +18,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.scrapper.controller.ScrapperGeneralChatController;
+import backend.academy.scrapper.exc.ChatNotFoundException;
 import backend.academy.scrapper.service.ChatService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
@@ -49,6 +51,11 @@ public class ScrapperGeneralChatControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Чат зарегистрирован")));
         verify(chatService).registerChat(chatId);
+    }
+
+    @Test
+    public void testRegisterChatWithInvalidId() throws Exception {
+        mockMvc.perform(post("/tg-chat/{chatId}", "invalid_id")).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -99,6 +106,24 @@ public class ScrapperGeneralChatControllerTest {
     }
 
     @Test
+    public void testAddLinkToChatWithEmptyBody() throws Exception {
+        Long chatId = 1L;
+
+        mockMvc.perform(post("/links")
+                        .header("Tg-Chat-Id", chatId.toString())
+                        .content("{}")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.description").value("Ошибка валидации полей"))
+                .andExpect(jsonPath("$.code").value("400"))
+                .andExpect(jsonPath("$.exceptionName").value("MethodArgumentNotValidException"))
+                .andExpect(jsonPath("$.exceptionMessage").exists())
+                .andExpect(jsonPath("$.stackTrace").isArray())
+                .andExpect(jsonPath("$.stackTrace.length()").value(1))
+                .andExpect(jsonPath("$.stackTrace[0]").value("link: Url cannot be blank"));
+    }
+
+    @Test
     public void testDeleteLinkFromChat() throws Exception {
         Long chatId = 1L;
         String url = "link.com";
@@ -112,5 +137,22 @@ public class ScrapperGeneralChatControllerTest {
                 .andExpect(content().string(comparesEqualTo("Ссылка успешно удалена")));
 
         verify(chatService).deleteLinkFromChat(chatId, url);
+    }
+
+    @Test
+    public void testDeleteNonExistentChat() throws Exception {
+        Long chatId = 999L;
+
+        doThrow(new ChatNotFoundException(chatId)).when(chatService).deleteChat(chatId);
+
+        mockMvc.perform(delete("/tg-chat/{chatId}", chatId))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.description").value("Ошибка в репозитории"))
+                .andExpect(jsonPath("$.code").value("404"))
+                .andExpect(jsonPath("$.exceptionName").value("ChatNotFoundException"))
+                .andExpect(
+                        jsonPath("$.exceptionMessage").value(String.format("Chat with id: %d does not exist", chatId)))
+                .andExpect(jsonPath("$.stackTrace").isArray())
+                .andExpect(jsonPath("$.stackTrace.length()").value(0));
     }
 }
