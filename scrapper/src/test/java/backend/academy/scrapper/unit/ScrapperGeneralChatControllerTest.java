@@ -1,91 +1,116 @@
 package backend.academy.scrapper.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.scrapper.controller.ScrapperGeneralChatController;
 import backend.academy.scrapper.service.ChatService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.ResponseEntity;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(ScrapperGeneralChatController.class)
 public class ScrapperGeneralChatControllerTest {
 
-    @Mock
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @MockitoBean
     private ChatService chatService;
 
-    @InjectMocks
-    private ScrapperGeneralChatController scrapperGeneralChatController;
-
     @Test
-    public void testRegisterChat() {
+    public void testRegisterChat() throws Exception {
         Long chatId = 1L;
         doNothing().when(chatService).registerChat(chatId);
 
-        ResponseEntity<String> response = scrapperGeneralChatController.registerChat(chatId);
-
-        assertThat("Чат зарегистрирован").isEqualTo(response.getBody());
-        assertThat(200).isEqualTo(response.getStatusCode().value());
+        mockMvc.perform(post("/tg-chat/{chatId}", chatId))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Чат зарегистрирован")));
         verify(chatService).registerChat(chatId);
     }
 
     @Test
-    public void testDeleteChat() {
+    public void testDeleteChat() throws Exception {
         Long chatId = 1L;
         doNothing().when(chatService).deleteChat(chatId);
 
-        ResponseEntity<String> response = scrapperGeneralChatController.deleteChat(chatId);
-
-        assertThat("Чат успешно удалён").isEqualTo(response.getBody());
-        assertThat(200).isEqualTo(response.getStatusCode().value());
+        mockMvc.perform(delete("/tg-chat/{chatId}", chatId))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Чат успешно удалён")));
         verify(chatService).deleteChat(chatId);
     }
 
     @Test
-    public void testGetAllLinksFromChat() {
+    public void testGetAllLinksFromChat() throws Exception {
         Long chatId = 1L;
         ListLinksResponse mockedResponse = new ListLinksResponse(Collections.emptyList(), 0);
         when(chatService.getAllLinksFromChat(chatId)).thenReturn(mockedResponse);
 
-        ResponseEntity<ListLinksResponse> response = scrapperGeneralChatController.getAllLinksFromChat(chatId);
+        mockMvc.perform(get("/links").header("Tg-Chat-Id", chatId.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.links").isArray())
+                .andExpect(jsonPath("$.links.length()").value(0))
+                .andExpect(jsonPath("$.size").value(0));
 
-        assertThat(mockedResponse).isEqualTo(response.getBody());
-        assertThat(200).isEqualTo(response.getStatusCode().value());
         verify(chatService).getAllLinksFromChat(chatId);
     }
 
     @Test
-    public void testAddLinkToChat() {
+    public void testAddLinkToChat() throws Exception {
         Long chatId = 1L;
         AddLinkRequest linkRequest = new AddLinkRequest("link.com", null, null);
         doNothing().when(chatService).addLinkToChat(chatId, linkRequest);
+        ArgumentCaptor<AddLinkRequest> captor = ArgumentCaptor.forClass(AddLinkRequest.class);
 
-        ResponseEntity<String> response = scrapperGeneralChatController.addLinkToChat(chatId, linkRequest);
+        mockMvc.perform(post("/links")
+                        .header("Tg-Chat-Id", chatId.toString())
+                        .content(objectMapper.writeValueAsString(linkRequest))
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string(comparesEqualTo("Ссылка успешно добавлена")));
 
-        assertThat("Ссылка успешно добавлена").isEqualTo(response.getBody());
-        assertThat(200).isEqualTo(response.getStatusCode().value());
-        verify(chatService).addLinkToChat(chatId, linkRequest);
+        verify(chatService).addLinkToChat(eq(chatId), captor.capture());
+        AddLinkRequest actualLinkRequest = captor.getValue();
+        assertThat(actualLinkRequest.link()).isEqualTo(linkRequest.link());
+        assertThat(actualLinkRequest.tags()).isEqualTo(linkRequest.tags());
+        assertThat(actualLinkRequest.filters()).isEqualTo(linkRequest.filters());
     }
 
     @Test
-    public void testDeleteLinkFromChat() {
+    public void testDeleteLinkFromChat() throws Exception {
         Long chatId = 1L;
         String url = "link.com";
         doNothing().when(chatService).deleteLinkFromChat(chatId, url);
 
-        ResponseEntity<String> response = scrapperGeneralChatController.deleteLinkFromChat(chatId, url);
+        mockMvc.perform(delete("/links")
+                        .header("Tg-Chat-Id", chatId.toString())
+                        .content(url)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().string(comparesEqualTo("Ссылка успешно удалена")));
 
-        assertThat("Ссылка успешно удалена").isEqualTo(response.getBody());
-        assertThat(200).isEqualTo(response.getStatusCode().value());
         verify(chatService).deleteLinkFromChat(chatId, url);
     }
 }
