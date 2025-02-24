@@ -79,18 +79,13 @@ public class BotService implements BotMessages {
                     link.filters().addAll(List.of(receivedText.split(" ")));
                     scrapperClient
                             .addLink(Long.parseLong(chatId), link)
-                            .doOnError(
-                                    error -> sendMessage(chatId, "❌ Ошибка добавления ссылки: " + error.getMessage()))
-                            .doOnSuccess(res -> sendMessage(chatId, "✅ Ссылка добавлена с тегами и фильтрами!" + res))
-                            .subscribe();
+                            .subscribe(response -> sendMessage(chatId, response));
                     userLinks.remove(chatId);
                 }
             } else if (replyText.contains(UNTRACK_LINK_MESSAGE)) {
                 scrapperClient
                         .removeLink(Long.parseLong(chatId), receivedText)
-                        .doOnError(error -> sendMessage(chatId, "Ошибка при удалении ссылки: " + error.getMessage()))
-                        .doOnSuccess(res -> sendMessage(chatId, "ССылка удалена" + res))
-                        .subscribe();
+                        .subscribe(response -> sendMessage(chatId, response));
             }
         }
     }
@@ -115,13 +110,10 @@ public class BotService implements BotMessages {
         switch (command) {
             case START -> scrapperClient
                     .registerChat(chatIdToLong)
-                    .doOnError(error -> sendMessage(chatId, "❌ Ошибка регистрации чата: " + error.getMessage(), false))
-                    .doOnSuccess(res -> sendMessage(chatId, "Welcome on board!" + res))
-                    .subscribe();
+                    .subscribe(response -> sendMessage(chatId, response));
             case HELP -> sendMessage(chatId, COMMANDS_LIST);
             case LIST -> scrapperClient
                     .getAllLinks(chatIdToLong)
-                    .doOnError(error -> sendMessage(chatId, "❌ Ошибка получения списка ссылок: " + error.getMessage()))
                     .subscribe(links -> sendMessage(chatId, links.toString()));
             case TRACK -> sendMessage(chatId, SEND_LINK_MESSAGE, true);
             case UNTRACK -> sendMessage(chatId, UNTRACK_LINK_MESSAGE, true);
