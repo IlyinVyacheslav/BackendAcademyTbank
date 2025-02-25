@@ -12,7 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import backend.academy.dto.AddLinkRequest;
-import backend.academy.dto.Update;
+import backend.academy.dto.LinkUpdate;
 import backend.academy.scrapper.clients.BotClient;
 import backend.academy.scrapper.clients.GitHubClient;
 import backend.academy.scrapper.clients.GitHubNotifications;
@@ -75,7 +75,7 @@ public class NotificationServiceIT {
 
         assertThatNoException().isThrownBy(() -> notificationService.checkNotifications());
 
-        verify(botClient, never()).postUpdates(any(Update.class));
+        verify(botClient, never()).postUpdates(any(LinkUpdate.class));
         assertThatThrownBy(() -> chatService.updateLinkLastModifiedAt(nonExistingtLink.id(), "2024-02-22T10:00:00Z"))
                 .isInstanceOf(LinkNotFoundException.class);
     }
@@ -100,21 +100,21 @@ public class NotificationServiceIT {
         notificationService.checkNotifications();
 
         verify(chatService, never()).updateLinkLastModifiedAt(eq(previousLink.id()), anyString());
-        verify(botClient, never()).postUpdates(any(Update.class));
+        verify(botClient, never()).postUpdates(any(LinkUpdate.class));
     }
 
     private void verifyNotificationsSentToSubscribedChats(Link link, List<Long> expectedChatIds) {
         when(chatService.getAllLinks()).thenReturn(List.of(link));
         when(gitHubClient.getNewNotifications(link.url(), link.lastModified()))
                 .thenReturn(Mono.just(new GitHubNotifications("New commit", "2024-02-22T10:00:00Z")));
-        ArgumentCaptor<Update> captor = ArgumentCaptor.forClass(Update.class);
+        ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
 
         notificationService.checkNotifications();
 
         verify(chatService, times(1)).updateLinkLastModifiedAt(link.id(), "2024-02-22T10:00:00Z");
         verify(botClient, times(1)).postUpdates(captor.capture());
-        Update update = captor.getValue();
-        assertThat(update.url()).isEqualTo(link.url());
-        assertThat(update.tgChatIds()).containsExactlyElementsOf(expectedChatIds);
+        LinkUpdate linkUpdate = captor.getValue();
+        assertThat(linkUpdate.url()).isEqualTo(link.url());
+        assertThat(linkUpdate.tgChatIds()).containsExactlyElementsOf(expectedChatIds);
     }
 }

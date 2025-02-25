@@ -1,6 +1,6 @@
 package backend.academy.scrapper.clients;
 
-import backend.academy.dto.Update;
+import backend.academy.dto.LinkUpdate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +20,9 @@ public class BotClient {
         this.webClient = botWebClient;
     }
 
-    public Mono<String> postUpdates(Update update) {
+    public Mono<String> postUpdates(LinkUpdate linkUpdate) {
         try {
-            String json = new ObjectMapper().writeValueAsString(update);
+            String json = new ObjectMapper().writeValueAsString(linkUpdate);
             log.info("JSON: {}", json);
             return webClient
                     .post()

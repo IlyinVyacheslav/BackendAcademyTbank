@@ -43,7 +43,7 @@ public class ScrapperGeneralChatControllerTest {
     private ChatService chatService;
 
     @Test
-    public void testRegisterChat() throws Exception {
+    void testRegisterChat() throws Exception {
         Long chatId = 1L;
         doNothing().when(chatService).registerChat(chatId);
 
@@ -54,12 +54,12 @@ public class ScrapperGeneralChatControllerTest {
     }
 
     @Test
-    public void testRegisterChatWithInvalidId() throws Exception {
+    void testRegisterChatWithInvalidId() throws Exception {
         mockMvc.perform(post("/tg-chat/{chatId}", "invalid_id")).andExpect(status().isBadRequest());
     }
 
     @Test
-    public void testDeleteChat() throws Exception {
+    void testDeleteChat() throws Exception {
         Long chatId = 1L;
         doNothing().when(chatService).deleteChat(chatId);
 
@@ -70,7 +70,7 @@ public class ScrapperGeneralChatControllerTest {
     }
 
     @Test
-    public void testGetAllLinksFromChat() throws Exception {
+    void testGetAllLinksFromChat() throws Exception {
         Long chatId = 1L;
         ListLinksResponse mockedResponse = new ListLinksResponse(Collections.emptyList(), 0);
         when(chatService.getAllLinksFromChat(chatId)).thenReturn(mockedResponse);
@@ -85,7 +85,7 @@ public class ScrapperGeneralChatControllerTest {
     }
 
     @Test
-    public void testAddLinkToChat() throws Exception {
+    void testAddLinkToChat() throws Exception {
         Long chatId = 1L;
         AddLinkRequest linkRequest = new AddLinkRequest("link.com", null, null);
         doNothing().when(chatService).addLinkToChat(chatId, linkRequest);
@@ -106,7 +106,7 @@ public class ScrapperGeneralChatControllerTest {
     }
 
     @Test
-    public void testAddLinkToChatWithEmptyBody() throws Exception {
+    void testAddLinkToChatWithEmptyBody() throws Exception {
         Long chatId = 1L;
 
         mockMvc.perform(post("/links")
@@ -124,7 +124,7 @@ public class ScrapperGeneralChatControllerTest {
     }
 
     @Test
-    public void testDeleteLinkFromChat() throws Exception {
+    void testDeleteLinkFromChat() throws Exception {
         Long chatId = 1L;
         String url = "link.com";
         doNothing().when(chatService).deleteLinkFromChat(chatId, url);
@@ -140,7 +140,7 @@ public class ScrapperGeneralChatControllerTest {
     }
 
     @Test
-    public void testDeleteNonExistentChat() throws Exception {
+    void testDeleteNonExistentChat() throws Exception {
         Long chatId = 999L;
 
         doThrow(new ChatNotFoundException(chatId)).when(chatService).deleteChat(chatId);

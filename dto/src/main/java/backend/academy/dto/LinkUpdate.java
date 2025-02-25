@@ -14,7 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Update {
+public class LinkUpdate {
     private Long id;
 
     @NotBlank(message = "Url cannot be blank")

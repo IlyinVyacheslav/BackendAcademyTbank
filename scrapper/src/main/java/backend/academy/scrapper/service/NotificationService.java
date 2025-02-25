@@ -1,6 +1,6 @@
 package backend.academy.scrapper.service;
 
-import backend.academy.dto.Update;
+import backend.academy.dto.LinkUpdate;
 import backend.academy.scrapper.clients.BotClient;
 import backend.academy.scrapper.clients.GitHubClient;
 import java.util.List;
@@ -41,8 +41,8 @@ public class NotificationService {
                                     chatService.updateLinkLastModifiedAt(link.id(), updatedAt);
                                     List<Long> chatsWithLinkId = chatService.getAllChatIdsByLinkId(link.id());
                                     botClient
-                                            .postUpdates(
-                                                    new Update(link.id(), link.url(), resp.message(), chatsWithLinkId))
+                                            .postUpdates(new LinkUpdate(
+                                                    link.id(), link.url(), resp.message(), chatsWithLinkId))
                                             .doOnError(
                                                     error -> log.error("Error while sending update to tgBot:", error))
                                             .doOnSuccess(res -> log.info("Update sent successfully: {}", res))
