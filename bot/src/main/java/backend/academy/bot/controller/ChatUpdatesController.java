@@ -21,7 +21,7 @@ public class ChatUpdatesController {
     @PostMapping("/updates")
     public ResponseEntity<?> postUpdates(@Valid @RequestBody LinkUpdate linkUpdate) {
         String message = String.format("\"%s\" url was updated: %s", linkUpdate.url(), linkUpdate.description());
-        linkUpdate.tgChatIds().forEach(id -> botService.sendMessage(String.valueOf(id), message, false));
+        linkUpdate.tgChatIds().forEach(id -> botService.sendMessage(String.valueOf(id), message));
         return ResponseEntity.ok("Обновление обработано");
     }
 }

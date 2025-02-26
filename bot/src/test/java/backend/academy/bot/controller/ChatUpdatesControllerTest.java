@@ -2,7 +2,6 @@ package backend.academy.bot.controller;
 
 import static org.hamcrest.Matchers.comparesEqualTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -36,7 +35,7 @@ class ChatUpdatesControllerTest {
 
     @Test
     void testPostUpdates() throws Exception {
-        doNothing().when(botService).sendMessage(anyString(), anyString(), anyBoolean());
+        doNothing().when(botService).sendMessage(anyString(), anyString());
         LinkUpdate linkUpdate = new LinkUpdate(1L, "github.com", "Something happened", List.of(1L, 2L));
 
         mockMvc.perform(post("/updates")
@@ -45,8 +44,8 @@ class ChatUpdatesControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(comparesEqualTo("Обновление обработано")));
 
-        verify(botService).sendMessage(eq("1"), anyString(), anyBoolean());
-        verify(botService).sendMessage(eq("2"), anyString(), anyBoolean());
+        verify(botService).sendMessage(eq("1"), anyString());
+        verify(botService).sendMessage(eq("2"), anyString());
     }
 
     @Test

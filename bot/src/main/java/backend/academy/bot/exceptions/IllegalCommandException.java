@@ -1,7 +1,12 @@
 package backend.academy.bot.exceptions;
 
+import lombok.Getter;
+
+@Getter
 public class IllegalCommandException extends IllegalArgumentException {
-    public IllegalCommandException(String message) {
-        super(message);
+    private String chatId;
+
+    public IllegalCommandException(String chatId) {
+        this.chatId = chatId;
     }
 }

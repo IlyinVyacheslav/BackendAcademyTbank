@@ -1,7 +1,9 @@
 package backend.academy.bot.service;
 
 import backend.academy.bot.exceptions.IllegalCommandException;
+import lombok.Getter;
 
+@Getter
 public enum Command {
     START("/start"),
     HELP("/help"),
@@ -14,16 +16,12 @@ public enum Command {
         this.command = command;
     }
 
-    public static Command getCommand(String commandText) {
+    public static Command getCommand(String chatId, String commandText) {
         for (Command command : values()) {
-            if (command.getCommand().equals(commandText)) {
+            if (command.command().equals(commandText)) {
                 return command;
             }
         }
-        throw new IllegalCommandException("Unknown command: " + commandText);
-    }
-
-    public String getCommand() {
-        return command;
+        throw new IllegalCommandException(chatId);
     }
 }

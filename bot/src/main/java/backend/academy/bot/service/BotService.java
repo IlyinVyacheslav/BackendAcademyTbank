@@ -1,6 +1,8 @@
 package backend.academy.bot.service;
 
 import backend.academy.bot.clients.ScrapperClient;
+import backend.academy.bot.exceptions.IllegalCommandException;
+import backend.academy.bot.exceptions.InvalidChatIdException;
 import backend.academy.dto.AddLinkRequest;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
@@ -48,14 +50,21 @@ public class BotService implements BotMessages {
                 String receivedText = message.text();
                 Message replyTo = message.replyToMessage();
 
-                if (replyTo != null) {
-                    processReply(chatId, receivedText, replyTo);
-                } else if (receivedText.startsWith("/")) {
-                    handleCommand(chatId, receivedText);
-                } else {
+                try {
+                    if (replyTo != null) {
+                        processReply(chatId, receivedText, replyTo);
+                    } else if (receivedText.startsWith("/")) {
+                        handleCommand(chatId, receivedText);
+                    } else {
+                        handleUnknownCommand(chatId);
+                    }
+                    log.info("📩 Новое сообщение от {}: {}", chatId, receivedText);
+                } catch (IllegalCommandException e) {
+                    log.warn("❌ Unknown command received from chat {}: {}", chatId, receivedText);
                     handleUnknownCommand(chatId);
+                } catch (InvalidChatIdException e) {
+                    log.error("❌ Invalid chat ID: {}", chatId, e);
                 }
-                log.info("📩 Новое сообщение от {}: {}", chatId, receivedText);
             }
         }
     }
@@ -76,36 +85,23 @@ public class BotService implements BotMessages {
             } else if (replyText.contains(SEND_FILTERS_MESSAGE)) {
                 AddLinkRequest link = userLinks.get(chatId);
                 if (link != null) {
-                    link.filters().addAll(List.of(receivedText.split(" ")));
+                    link.filters().addAll(List.of(receivedText.split("\\s")));
                     scrapperClient
-                            .addLink(Long.parseLong(chatId), link)
+                            .addLink(getChatIdToLong(chatId), link)
                             .subscribe(response -> sendMessage(chatId, response));
                     userLinks.remove(chatId);
                 }
             } else if (replyText.contains(UNTRACK_LINK_MESSAGE)) {
                 scrapperClient
-                        .removeLink(Long.parseLong(chatId), receivedText)
+                        .removeLink(getChatIdToLong(chatId), receivedText)
                         .subscribe(response -> sendMessage(chatId, response));
             }
         }
     }
 
-    private void handleCommand(String chatId, String commandText) {
-        Command command;
-        try {
-            command = Command.getCommand(commandText);
-        } catch (Exception e) {
-            log.error("Unknown command", e);
-            handleUnknownCommand(chatId);
-            return;
-        }
-        Long chatIdToLong;
-        try {
-            chatIdToLong = Long.parseLong(chatId);
-        } catch (NumberFormatException e) {
-            log.error("Incorrect chat id", e);
-            return;
-        }
+    public void handleCommand(String chatId, String commandText) {
+        Command command = Command.getCommand(chatId, commandText);
+        Long chatIdToLong = getChatIdToLong(chatId);
 
         switch (command) {
             case START -> scrapperClient
@@ -120,7 +116,15 @@ public class BotService implements BotMessages {
         }
     }
 
-    private void handleUnknownCommand(String chatId) {
+    private static long getChatIdToLong(String chatId) {
+        try {
+            return Long.parseLong(chatId);
+        } catch (NumberFormatException e) {
+            throw new InvalidChatIdException(chatId);
+        }
+    }
+
+    public void handleUnknownCommand(String chatId) {
         sendMessage(chatId, UNKNOWN_COMMAND);
     }
 
@@ -128,7 +132,7 @@ public class BotService implements BotMessages {
         sendMessage(chatId, text, false);
     }
 
-    public void sendMessage(String chatId, String text, boolean forceReply) {
+    private void sendMessage(String chatId, String text, boolean forceReply) {
         SendMessage message = new SendMessage(chatId, text);
         if (forceReply) {
             message.replyMarkup(new ForceReply());
