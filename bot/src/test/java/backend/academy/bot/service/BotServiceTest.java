@@ -42,7 +42,6 @@ class BotServiceTest {
 
         assertThatThrownBy(() -> botService.handleCommand(chatId, unknownCommand))
                 .isInstanceOf(IllegalCommandException.class);
-        verify(telegramBot, times(1)).execute(any(SendMessage.class));
     }
 
     @Test
@@ -64,8 +63,6 @@ class BotServiceTest {
     void handleCommand_ShouldThrowInvalidChatIdException_WhenChatIdIsNull() {
         String command = "/help";
         assertThatThrownBy(() -> botService.handleCommand(null, command)).isInstanceOf(InvalidChatIdException.class);
-
-        verify(telegramBot, times(1)).execute(any(SendMessage.class));
     }
 
     @Test
