@@ -15,7 +15,7 @@ import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.LinkUpdate;
 import backend.academy.scrapper.clients.BotClient;
 import backend.academy.scrapper.clients.GitHubClient;
-import backend.academy.scrapper.clients.GitHubNotifications;
+import backend.academy.scrapper.clients.Notifications;
 import backend.academy.scrapper.exc.LinkNotFoundException;
 import backend.academy.scrapper.model.Link;
 import backend.academy.scrapper.service.ChatService;
@@ -71,7 +71,7 @@ public class NotificationServiceIT {
         Link nonExistingtLink = new Link(3L, "github.com/test/repo", null);
         when(chatService.getAllLinks()).thenReturn(List.of(nonExistingtLink));
         when(gitHubClient.getNewNotifications(nonExistingtLink.url(), nonExistingtLink.lastModified()))
-                .thenReturn(Mono.just(new GitHubNotifications("New commit", "2024-02-22T10:00:00Z")));
+                .thenReturn(Mono.just(new Notifications("New commit", "2024-02-22T10:00:00Z")));
 
         assertThatNoException().isThrownBy(() -> notificationService.checkNotifications());
 
@@ -95,7 +95,7 @@ public class NotificationServiceIT {
         Link previousLink = new Link(4L, "github.com/user1/repo1", "2024-02-22T10:00:00Z");
         when(chatService.getAllLinks()).thenReturn(List.of(previousLink));
         when(gitHubClient.getNewNotifications(previousLink.url(), previousLink.lastModified()))
-                .thenReturn(Mono.just(new GitHubNotifications("New commit", previousLink.lastModified())));
+                .thenReturn(Mono.just(new Notifications("New commit", previousLink.lastModified())));
 
         notificationService.checkNotifications();
 
@@ -106,7 +106,7 @@ public class NotificationServiceIT {
     private void verifyNotificationsSentToSubscribedChats(Link link, List<Long> expectedChatIds) {
         when(chatService.getAllLinks()).thenReturn(List.of(link));
         when(gitHubClient.getNewNotifications(link.url(), link.lastModified()))
-                .thenReturn(Mono.just(new GitHubNotifications("New commit", "2024-02-22T10:00:00Z")));
+                .thenReturn(Mono.just(new Notifications("New commit", "2024-02-22T10:00:00Z")));
         ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
 
         notificationService.checkNotifications();

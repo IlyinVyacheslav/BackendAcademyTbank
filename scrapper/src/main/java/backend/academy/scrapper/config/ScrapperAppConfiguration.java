@@ -23,4 +23,9 @@ public class ScrapperAppConfiguration {
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + scrapperConfig.githubToken())
                 .build();
     }
+
+    @Bean
+    public WebClient stackOverflowWebClient(ScrapperConfig scrapperConfig) {
+        return WebClient.builder().baseUrl("https://api.stackexchange.com").build();
+    }
 }
