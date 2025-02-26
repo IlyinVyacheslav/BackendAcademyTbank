@@ -13,4 +13,5 @@ public interface BotMessages {
         /list - all following links
         """;
     String UNKNOWN_COMMAND = "Неизвестная команда. Введите /help";
+    String EMPTY_LIST_MESSAGE = "Вы пока ничего не отслеживаете";
 }

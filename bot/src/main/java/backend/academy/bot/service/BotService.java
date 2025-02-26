@@ -6,10 +6,12 @@ import backend.academy.bot.exceptions.InvalidChatIdException;
 import backend.academy.dto.AddLinkRequest;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
+import com.pengrad.telegrambot.model.BotCommand;
 import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.ForceReply;
 import com.pengrad.telegrambot.request.SendMessage;
+import com.pengrad.telegrambot.request.SetMyCommands;
 import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +40,13 @@ public class BotService implements BotMessages {
             handleUpdates(updates);
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         });
+        setMyCommands();
         log.info("✅ Telegram Bot запущен!");
+    }
+
+    private void setMyCommands() {
+        BotCommand[] commands = Command.getAllCommands();
+        bot.execute(new SetMyCommands(commands));
     }
 
     private void handleUpdates(List<Update> updates) {
@@ -108,9 +116,13 @@ public class BotService implements BotMessages {
                     .registerChat(chatIdToLong)
                     .subscribe(response -> sendMessage(chatId, response));
             case HELP -> sendMessage(chatId, COMMANDS_LIST);
-            case LIST -> scrapperClient
-                    .getAllLinks(chatIdToLong)
-                    .subscribe(links -> sendMessage(chatId, links.toString()));
+            case LIST -> scrapperClient.getAllLinks(chatIdToLong).subscribe(links -> {
+                if (links.isEmpty()) {
+                    sendMessage(chatId, EMPTY_LIST_MESSAGE);
+                } else {
+                    sendMessage(chatId, links.toString());
+                }
+            });
             case TRACK -> sendMessage(chatId, SEND_LINK_MESSAGE, true);
             case UNTRACK -> sendMessage(chatId, UNTRACK_LINK_MESSAGE, true);
         }
