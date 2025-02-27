@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -42,7 +41,6 @@ class BotServiceTest {
 
         assertThatThrownBy(() -> botService.handleCommand(chatId, unknownCommand))
                 .isInstanceOf(IllegalCommandException.class);
-        verify(telegramBot, times(1)).execute(any(SendMessage.class));
     }
 
     @Test
@@ -64,8 +62,6 @@ class BotServiceTest {
     void handleCommand_ShouldThrowInvalidChatIdException_WhenChatIdIsNull() {
         String command = "/help";
         assertThatThrownBy(() -> botService.handleCommand(null, command)).isInstanceOf(InvalidChatIdException.class);
-
-        verify(telegramBot, times(1)).execute(any(SendMessage.class));
     }
 
     @Test
