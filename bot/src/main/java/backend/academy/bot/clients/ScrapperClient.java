@@ -2,10 +2,10 @@ package backend.academy.bot.clients;
 
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.ApiErrorResponse;
+import backend.academy.logger.LoggerHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
@@ -15,7 +15,6 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 
 @Component
-@Slf4j
 public class ScrapperClient {
     private final WebClient webClient;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -79,10 +78,9 @@ public class ScrapperClient {
     public Mono<String> addLink(Long chatId, AddLinkRequest linkRequest) {
         try {
             String json = new ObjectMapper().writeValueAsString(linkRequest);
-            log.info("JSON: {}", json);
             return sendRequest(HttpMethod.POST, "/links", chatId, json, String.class);
         } catch (JsonProcessingException e) {
-            log.error("Error while converting to json", e);
+            LoggerHelper.error("Error while converting to json", e);
         }
         return Mono.empty();
     }

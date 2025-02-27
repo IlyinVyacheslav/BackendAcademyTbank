@@ -18,6 +18,7 @@
     <modules>
         <module>bot</module>
         <module>dto</module>
+        <module>logger</module>
         <module>report</module>
         <module>scrapper</module>
     </modules>

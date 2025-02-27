@@ -4,6 +4,7 @@ import backend.academy.bot.clients.ScrapperClient;
 import backend.academy.bot.exceptions.IllegalCommandException;
 import backend.academy.bot.exceptions.InvalidChatIdException;
 import backend.academy.dto.AddLinkRequest;
+import backend.academy.logger.LoggerHelper;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.BotCommand;
@@ -17,11 +18,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-@Slf4j
 @Service
 public class BotService implements BotMessages {
     private final TelegramBot bot;
@@ -34,6 +33,14 @@ public class BotService implements BotMessages {
         this.scrapperClient = scrapperClient;
     }
 
+    private static long getChatIdToLong(String chatId) {
+        try {
+            return Long.parseLong(chatId);
+        } catch (NumberFormatException e) {
+            throw new InvalidChatIdException(chatId);
+        }
+    }
+
     @PostConstruct
     public void init() {
         bot.setUpdatesListener(updates -> {
@@ -41,7 +48,7 @@ public class BotService implements BotMessages {
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
         });
         setMyCommands();
-        log.info("✅ Telegram Bot запущен!");
+        LoggerHelper.info("✅ Telegram Bot запущен!");
     }
 
     private void setMyCommands() {
@@ -52,8 +59,8 @@ public class BotService implements BotMessages {
     private void handleUpdates(List<Update> updates) {
         for (Update update : updates) {
             Message message = update.message();
-            log.info("Received message: {}", message);
-            if (message != null && message.text() != null) {
+            LoggerHelper.info("Received message", Map.of("message", message));
+            if (message.text() != null) {
                 String chatId = message.chat().id().toString();
                 String receivedText = message.text();
                 Message replyTo = message.replyToMessage();
@@ -66,12 +73,14 @@ public class BotService implements BotMessages {
                     } else {
                         handleUnknownCommand(chatId);
                     }
-                    log.info("📩 Новое сообщение от {}: {}", chatId, receivedText);
+                    LoggerHelper.info(
+                            "📩 Новое сообщение из чата", Map.of("chatId", chatId, "receivedText", receivedText));
                 } catch (IllegalCommandException e) {
-                    log.warn("❌ Unknown command received from chat {}: {}", chatId, receivedText);
+                    LoggerHelper.warn(
+                            "❌ Неизвестная команда из чата", Map.of("chatId", chatId, "receiverText", receivedText));
                     handleUnknownCommand(chatId);
                 } catch (InvalidChatIdException e) {
-                    log.error("❌ Invalid chat ID: {}", chatId, e);
+                    LoggerHelper.error("❌ Чат с неправильным ID", Map.of("chatId", chatId), e);
                 }
             }
         }
@@ -125,14 +134,6 @@ public class BotService implements BotMessages {
             });
             case TRACK -> sendMessage(chatId, SEND_LINK_MESSAGE, true);
             case UNTRACK -> sendMessage(chatId, UNTRACK_LINK_MESSAGE, true);
-        }
-    }
-
-    private static long getChatIdToLong(String chatId) {
-        try {
-            return Long.parseLong(chatId);
-        } catch (NumberFormatException e) {
-            throw new InvalidChatIdException(chatId);
         }
     }
 

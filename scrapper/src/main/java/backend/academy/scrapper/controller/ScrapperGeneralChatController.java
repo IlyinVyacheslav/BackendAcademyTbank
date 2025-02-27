@@ -2,8 +2,10 @@ package backend.academy.scrapper.controller;
 
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.ListLinksResponse;
+import backend.academy.logger.LoggerHelper;
 import backend.academy.scrapper.service.ChatService;
 import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -45,7 +47,7 @@ public class ScrapperGeneralChatController {
     @PostMapping("/links")
     public ResponseEntity<String> addLinkToChat(
             @RequestHeader("Tg-Chat-Id") Long id, @Valid @RequestBody AddLinkRequest linkRequest) {
-        log.info("Link with url:{}", linkRequest.link());
+        LoggerHelper.info("Link with url", Map.of("link", linkRequest.link()));
         chatService.addLinkToChat(id, linkRequest);
         return ResponseEntity.ok("Ссылка успешно добавлена");
     }

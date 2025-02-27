@@ -31,14 +31,4 @@ public class BotGlobalExceptionHandler {
                 "Ошибка валидации полей", "400", ex.getClass().getSimpleName(), ex.getMessage(), errors);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
-
-    //    @ExceptionHandler(IllegalCommandException.class)
-    //    public void handleIllegalCommandException(IllegalCommandException ex) {
-    //        botService.handleUnknownCommand(ex.chatId());
-    //    }
-    //
-    //    @ExceptionHandler(InvalidChatIdException.class)
-    //    public void handleInvalidChatIdException(InvalidChatIdException ex) {
-    //        log.error("Incorrect chat id", ex);
-    //    }
 }

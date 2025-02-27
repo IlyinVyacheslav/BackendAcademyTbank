@@ -1,6 +1,7 @@
 package backend.academy.scrapper.clients;
 
 import backend.academy.dto.LinkUpdate;
+import backend.academy.logger.LoggerHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,6 @@ public class BotClient {
     public Mono<String> postUpdates(LinkUpdate linkUpdate) {
         try {
             String json = new ObjectMapper().writeValueAsString(linkUpdate);
-            log.info("JSON: {}", json);
             return webClient
                     .post()
                     .uri("/updates")
@@ -32,7 +32,7 @@ public class BotClient {
                     .retrieve()
                     .bodyToMono(String.class);
         } catch (JsonProcessingException e) {
-            log.error("Error while converting update to json: {}", e.getMessage());
+            LoggerHelper.error("Error while converting update to json", e);
         }
         return Mono.empty();
     }

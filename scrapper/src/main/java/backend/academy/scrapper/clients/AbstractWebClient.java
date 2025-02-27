@@ -1,6 +1,8 @@
 package backend.academy.scrapper.clients;
 
+import backend.academy.logger.LoggerHelper;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -25,12 +27,13 @@ public abstract class AbstractWebClient implements WebSiteClient {
         return request.retrieve()
                 .onStatus(HttpStatus.NOT_MODIFIED::equals, response -> Mono.empty())
                 .bodyToMono(JsonNode.class)
-                .doOnSuccess(response ->
-                        log.info("Raw response from {}: {}", getClass().getSimpleName(), response))
+                .doOnSuccess(response -> LoggerHelper.info(
+                        "Raw response from " + getClass().getSimpleName(), Map.of("response", response)))
                 .map(response -> processResponse(response, lastModified))
                 .switchIfEmpty(Mono.just(new Notifications("No updates", lastModified)))
                 .onErrorResume(e -> {
-                    log.error("Error retrieving data from {}", getClass().getSimpleName(), e);
+                    LoggerHelper.error(
+                            "Error retrieving data from " + getClass().getSimpleName(), e);
                     return Mono.just(new Notifications("Error retrieving data", lastModified));
                 });
     }
