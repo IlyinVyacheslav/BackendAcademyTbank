@@ -17,11 +17,12 @@ import reactor.core.publisher.Mono;
 @Component
 public class ScrapperClient {
     private final WebClient webClient;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public ScrapperClient(WebClient webClient) {
+    public ScrapperClient(WebClient webClient, ObjectMapper objectMapper) {
         this.webClient = webClient;
+        this.objectMapper = objectMapper;
     }
 
     private String parseErrorResponse(String responseBody) {

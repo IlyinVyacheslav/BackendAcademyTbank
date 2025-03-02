@@ -13,12 +13,13 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.ForceReply;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,8 +42,8 @@ public class BotService implements BotMessages {
         }
     }
 
-    @PostConstruct
-    public void init() {
+    @EventListener(ContextRefreshedEvent.class)
+    public void onEventWithout() {
         bot.setUpdatesListener(updates -> {
             handleUpdates(updates);
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
@@ -89,30 +90,30 @@ public class BotService implements BotMessages {
     private void processReply(String chatId, String receivedText, Message replyTo) {
         String replyText = replyTo.text();
 
-        if (replyText != null) {
-            if (replyText.contains(SEND_LINK_MESSAGE)) {
-                userLinks.put(chatId, new AddLinkRequest(receivedText, new ArrayList<>(), new ArrayList<>()));
-                sendMessage(chatId, SEND_TAGS_MESSAGE, true);
-            } else if (replyText.contains(SEND_TAGS_MESSAGE)) {
-                AddLinkRequest link = userLinks.get(chatId);
-                if (link != null) {
-                    link.tags().addAll(List.of(receivedText.split("\\s")));
-                    sendMessage(chatId, SEND_FILTERS_MESSAGE, true);
-                }
-            } else if (replyText.contains(SEND_FILTERS_MESSAGE)) {
-                AddLinkRequest link = userLinks.get(chatId);
-                if (link != null) {
-                    link.filters().addAll(List.of(receivedText.split("\\s")));
-                    scrapperClient
-                            .addLink(getChatIdToLong(chatId), link)
-                            .subscribe(response -> sendMessage(chatId, response));
-                    userLinks.remove(chatId);
-                }
-            } else if (replyText.contains(UNTRACK_LINK_MESSAGE)) {
-                scrapperClient
-                        .removeLink(getChatIdToLong(chatId), receivedText)
-                        .subscribe(response -> sendMessage(chatId, response));
+        if (replyText == null) return;
+
+        if (replyText.contains(SEND_LINK_MESSAGE)) {
+            userLinks.put(chatId, new AddLinkRequest(receivedText, new ArrayList<>(), new ArrayList<>()));
+            sendMessage(chatId, SEND_TAGS_MESSAGE, true);
+        } else if (replyText.contains(SEND_TAGS_MESSAGE)) {
+            AddLinkRequest link = userLinks.get(chatId);
+            if (link != null) {
+                link.tags().addAll(List.of(receivedText.split("\\s")));
+                sendMessage(chatId, SEND_FILTERS_MESSAGE, true);
             }
+        } else if (replyText.contains(SEND_FILTERS_MESSAGE)) {
+            AddLinkRequest link = userLinks.get(chatId);
+            if (link != null) {
+                link.filters().addAll(List.of(receivedText.split("\\s")));
+                scrapperClient
+                        .addLink(getChatIdToLong(chatId), link)
+                        .subscribe(response -> sendMessage(chatId, response));
+                userLinks.remove(chatId);
+            }
+        } else if (replyText.contains(UNTRACK_LINK_MESSAGE)) {
+            scrapperClient
+                    .removeLink(getChatIdToLong(chatId), receivedText)
+                    .subscribe(response -> sendMessage(chatId, response));
         }
     }
 

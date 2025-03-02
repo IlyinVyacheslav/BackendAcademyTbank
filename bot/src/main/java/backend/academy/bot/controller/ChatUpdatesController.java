@@ -4,7 +4,6 @@ import backend.academy.bot.service.BotService;
 import backend.academy.dto.LinkUpdate;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,9 +18,9 @@ public class ChatUpdatesController {
     }
 
     @PostMapping("/updates")
-    public ResponseEntity<?> postUpdates(@Valid @RequestBody LinkUpdate linkUpdate) {
+    public String postUpdates(@Valid @RequestBody LinkUpdate linkUpdate) {
         String message = String.format("\"%s\" url was updated: %s", linkUpdate.url(), linkUpdate.description());
         linkUpdate.tgChatIds().forEach(id -> botService.sendMessage(String.valueOf(id), message));
-        return ResponseEntity.ok("Обновление обработано");
+        return "Обновление обработано";
     }
 }
