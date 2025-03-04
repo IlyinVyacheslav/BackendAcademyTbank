@@ -38,7 +38,6 @@ public class BotService implements BotMessages {
     public BotService(List<Command> commands, TelegramBot telegramBot, ScrapperClient scrapperClient) {
         this.bot = telegramBot;
         this.scrapperClient = scrapperClient;
-        commands.forEach(x -> LoggerHelper.info(x.getCommand()));
         commandsMap = commands.stream().collect(Collectors.toMap(Command::getCommand, Function.identity()));
     }
 
@@ -136,8 +135,7 @@ public class BotService implements BotMessages {
     public void handleCommand(String chatId, String commandText) {
         Command command = commandsMap.get(commandText);
         if (command == null) {
-            handleUnknownCommand(chatId);
-            return;
+            throw new IllegalCommandException(chatId);
         }
         Long chatIdToLong = getChatIdToLong(chatId);
         String response = command.execute(scrapperClient, chatIdToLong);

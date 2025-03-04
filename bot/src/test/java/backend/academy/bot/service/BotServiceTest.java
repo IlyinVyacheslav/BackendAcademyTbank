@@ -17,22 +17,24 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import reactor.core.publisher.Mono;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
 class BotServiceTest {
     private final String chatId = "12345";
 
-    @Mock
+    @MockitoBean
     private ScrapperClient scrapperClient;
 
-    @Mock
+    @MockitoBean
     private TelegramBot telegramBot;
 
-    @InjectMocks
+    @Autowired
     private BotService botService;
 
     @Test
@@ -45,7 +47,7 @@ class BotServiceTest {
 
     @Test
     void handleCommand_ShouldThrowIllegalCommandException_WhenCommandIsNull() {
-        assertThatThrownBy(() -> botService.handleCommand(null, "command")).isInstanceOf(IllegalCommandException.class);
+        assertThatThrownBy(() -> botService.handleCommand(chatId, null)).isInstanceOf(IllegalCommandException.class);
         verify(telegramBot, never()).execute(any(SendMessage.class));
     }
 
