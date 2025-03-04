@@ -3,6 +3,7 @@ package backend.academy.bot.service;
 import backend.academy.bot.clients.ScrapperClient;
 import backend.academy.bot.exceptions.IllegalCommandException;
 import backend.academy.bot.exceptions.InvalidChatIdException;
+import backend.academy.bot.service.commands.Command;
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.logger.LoggerHelper;
 import com.pengrad.telegrambot.TelegramBot;
@@ -17,21 +18,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class BotService implements BotMessages {
     private final TelegramBot bot;
     private final ScrapperClient scrapperClient;
     private final Map<String, AddLinkRequest> userLinks = new ConcurrentHashMap<>();
+    private final Map<String, Command> commandsMap;
 
     @Autowired
-    public BotService(TelegramBot telegramBot, ScrapperClient scrapperClient) {
+    public BotService(List<Command> commands, TelegramBot telegramBot, ScrapperClient scrapperClient) {
         this.bot = telegramBot;
         this.scrapperClient = scrapperClient;
+        commands.forEach(x -> LoggerHelper.info(x.getCommand()));
+        commandsMap = commands.stream().collect(Collectors.toMap(Command::getCommand, Function.identity()));
     }
 
     private static long getChatIdToLong(String chatId) {
@@ -53,14 +61,20 @@ public class BotService implements BotMessages {
     }
 
     private void setMyCommands() {
-        BotCommand[] commands = Command.getAllCommands();
+        BotCommand[] commands = commandsMap.values().stream()
+                .map(cmd -> new BotCommand(cmd.getCommand(), cmd.getDescription()))
+                .toArray(BotCommand[]::new);
         bot.execute(new SetMyCommands(commands));
     }
 
     private void handleUpdates(List<Update> updates) {
         for (Update update : updates) {
             Message message = update.message();
-            LoggerHelper.info("Received message", Map.of("message", message));
+            if (message != null && update.message() != null) {
+                LoggerHelper.info("Received message", Map.of("message", message));
+            } else {
+                return;
+            }
             if (message.text() != null) {
                 String chatId = message.chat().id().toString();
                 String receivedText = message.text();
@@ -90,7 +104,9 @@ public class BotService implements BotMessages {
     private void processReply(String chatId, String receivedText, Message replyTo) {
         String replyText = replyTo.text();
 
-        if (replyText == null) return;
+        if (replyText == null) {
+            return;
+        }
 
         if (replyText.contains(SEND_LINK_MESSAGE)) {
             userLinks.put(chatId, new AddLinkRequest(receivedText, new ArrayList<>(), new ArrayList<>()));
@@ -118,24 +134,14 @@ public class BotService implements BotMessages {
     }
 
     public void handleCommand(String chatId, String commandText) {
-        Command command = Command.getCommand(chatId, commandText);
-        Long chatIdToLong = getChatIdToLong(chatId);
-
-        switch (command) {
-            case START -> scrapperClient
-                    .registerChat(chatIdToLong)
-                    .subscribe(response -> sendMessage(chatId, response));
-            case HELP -> sendMessage(chatId, COMMANDS_LIST);
-            case LIST -> scrapperClient.getAllLinks(chatIdToLong).subscribe(links -> {
-                if (links.isEmpty()) {
-                    sendMessage(chatId, EMPTY_LIST_MESSAGE);
-                } else {
-                    sendMessage(chatId, links.toString());
-                }
-            });
-            case TRACK -> sendMessage(chatId, SEND_LINK_MESSAGE, true);
-            case UNTRACK -> sendMessage(chatId, UNTRACK_LINK_MESSAGE, true);
+        Command command = commandsMap.get(commandText);
+        if (command == null) {
+            handleUnknownCommand(chatId);
+            return;
         }
+        Long chatIdToLong = getChatIdToLong(chatId);
+        String response = command.execute(scrapperClient, chatIdToLong);
+        sendMessage(chatId, response, command.shouldBeReplied());
     }
 
     public void handleUnknownCommand(String chatId) {
