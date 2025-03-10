@@ -12,6 +12,16 @@
 
     <dependencies>
         <dependency>
+            <groupId>backend.academy</groupId>
+            <artifactId>dto</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>backend.academy</groupId>
+            <artifactId>logger</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.pengrad</groupId>
             <artifactId>java-telegram-bot-api</artifactId>
         </dependency>
@@ -72,6 +82,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>1.18.36</version>
             <optional>true</optional>
         </dependency>
 
