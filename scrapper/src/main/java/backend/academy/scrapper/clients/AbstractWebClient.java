@@ -2,6 +2,7 @@ package backend.academy.scrapper.clients;
 
 import backend.academy.logger.LoggerHelper;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.sql.Timestamp;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -17,11 +18,11 @@ public abstract class AbstractWebClient implements WebSiteClient {
         this.webClient = webClient;
     }
 
-    protected Mono<Notifications> fetchNotifications(String uri, String lastModified) {
+    protected Mono<Notifications> fetchNotifications(String uri, Timestamp lastModified) {
         WebClient.RequestHeadersSpec<?> request = webClient.get().uri(uri);
 
-        if (uri.startsWith("github.com") && lastModified != null && !lastModified.isEmpty()) {
-            request.header(HttpHeaders.IF_MODIFIED_SINCE, lastModified);
+        if (uri.startsWith("github.com") && lastModified != null) {
+            request.header(HttpHeaders.IF_MODIFIED_SINCE, lastModified.toString());
         }
 
         return request.retrieve()
@@ -38,5 +39,5 @@ public abstract class AbstractWebClient implements WebSiteClient {
                 });
     }
 
-    protected abstract Notifications processResponse(JsonNode response, String lastModified);
+    protected abstract Notifications processResponse(JsonNode response, Timestamp lastModified);
 }

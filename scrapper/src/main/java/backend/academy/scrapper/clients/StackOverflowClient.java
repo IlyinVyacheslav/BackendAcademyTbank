@@ -1,6 +1,7 @@
 package backend.academy.scrapper.clients;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.sql.Timestamp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class StackOverflowClient extends AbstractWebClient {
     }
 
     @Override
-    public Mono<Notifications> getNewNotifications(String url, String lastModified) {
+    public Mono<Notifications> getNewNotifications(String url, Timestamp lastModified) {
         String questionId = parseStackOverflowUrl(url);
         if (questionId == null) {
             return Mono.just(new Notifications("Incorrect url:" + url, lastModified));
@@ -27,11 +28,12 @@ public class StackOverflowClient extends AbstractWebClient {
     }
 
     @Override
-    protected Notifications processResponse(JsonNode response, String lastModified) {
+    protected Notifications processResponse(JsonNode response, Timestamp lastModified) {
         JsonNode items = response.get("items");
         if (items != null && items.isArray() && !items.isEmpty()) {
             JsonNode latestQuestion = items.get(0);
-            String lastActivityDate = latestQuestion.get("last_activity_date").asText();
+            Timestamp lastActivityDate =
+                    Timestamp.valueOf(latestQuestion.get("last_activity_date").asText());
             return new Notifications("New activity on question", lastActivityDate);
         }
         return new Notifications("No new activity", lastModified);

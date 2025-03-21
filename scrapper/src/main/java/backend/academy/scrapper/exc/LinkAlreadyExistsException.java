@@ -6,6 +6,6 @@ public class LinkAlreadyExistsException extends BaseChatRepositoryException {
     }
 
     public LinkAlreadyExistsException(Long chatId, String url) {
-        super(String.format("Chat with id:%d already follows url:%s", chatId, url));
+        super(String.format("Chat with linkId:%d already follows url:%s", chatId, url));
     }
 }

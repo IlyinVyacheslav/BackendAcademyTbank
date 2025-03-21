@@ -17,9 +17,10 @@ import backend.academy.scrapper.clients.BotClient;
 import backend.academy.scrapper.clients.GitHubClient;
 import backend.academy.scrapper.clients.Notifications;
 import backend.academy.scrapper.exc.LinkNotFoundException;
-import backend.academy.scrapper.model.Link;
+import backend.academy.scrapper.model.dto.Link;
 import backend.academy.scrapper.service.ChatService;
 import backend.academy.scrapper.service.NotificationService;
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -71,12 +72,13 @@ public class NotificationServiceIT {
         Link nonExistingtLink = new Link(3L, "github.com/test/repo", null);
         when(chatService.getAllLinks()).thenReturn(List.of(nonExistingtLink));
         when(gitHubClient.getNewNotifications(nonExistingtLink.url(), nonExistingtLink.lastModified()))
-                .thenReturn(Mono.just(new Notifications("New commit", "2024-02-22T10:00:00Z")));
+                .thenReturn(Mono.just(new Notifications("New commit", Timestamp.valueOf("2024-02-22T10:00:00Z"))));
 
         assertThatNoException().isThrownBy(() -> notificationService.checkNotifications());
 
         verify(botClient, never()).postUpdates(any(LinkUpdate.class));
-        assertThatThrownBy(() -> chatService.updateLinkLastModifiedAt(nonExistingtLink.id(), "2024-02-22T10:00:00Z"))
+        assertThatThrownBy(() -> chatService.updateLinkLastModifiedAt(
+                        nonExistingtLink.linkId(), Timestamp.valueOf("2024-02-22T10:00:00Z")))
                 .isInstanceOf(LinkNotFoundException.class);
     }
 
@@ -92,26 +94,28 @@ public class NotificationServiceIT {
 
     @Test
     void checkNotifications_ShouldNotSendUpdate_WhenLastModifiedNotChanged() {
-        Link previousLink = new Link(4L, "github.com/user1/repo1", "2024-02-22T10:00:00Z");
+        Link previousLink = new Link(4L, "github.com/user1/repo1", Timestamp.valueOf("2024-02-22T10:00:00Z"));
         when(chatService.getAllLinks()).thenReturn(List.of(previousLink));
         when(gitHubClient.getNewNotifications(previousLink.url(), previousLink.lastModified()))
                 .thenReturn(Mono.just(new Notifications("New commit", previousLink.lastModified())));
 
         notificationService.checkNotifications();
 
-        verify(chatService, never()).updateLinkLastModifiedAt(eq(previousLink.id()), anyString());
+        verify(chatService, never())
+                .updateLinkLastModifiedAt(eq(previousLink.linkId()), Timestamp.valueOf(anyString()));
         verify(botClient, never()).postUpdates(any(LinkUpdate.class));
     }
 
     private void verifyNotificationsSentToSubscribedChats(Link link, List<Long> expectedChatIds) {
         when(chatService.getAllLinks()).thenReturn(List.of(link));
         when(gitHubClient.getNewNotifications(link.url(), link.lastModified()))
-                .thenReturn(Mono.just(new Notifications("New commit", "2024-02-22T10:00:00Z")));
+                .thenReturn(Mono.just(new Notifications("New commit", Timestamp.valueOf("2024-02-22T10:00:00Z"))));
         ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
 
         notificationService.checkNotifications();
 
-        verify(chatService, times(1)).updateLinkLastModifiedAt(link.id(), "2024-02-22T10:00:00Z");
+        verify(chatService, times(1))
+                .updateLinkLastModifiedAt(link.linkId(), Timestamp.valueOf("2024-02-22T10:00:00Z"));
         verify(botClient, times(1)).postUpdates(captor.capture());
         LinkUpdate linkUpdate = captor.getValue();
         assertThat(linkUpdate.url()).isEqualTo(link.url());

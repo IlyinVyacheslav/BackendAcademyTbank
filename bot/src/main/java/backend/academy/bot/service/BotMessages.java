@@ -9,7 +9,7 @@ public interface BotMessages {
             """
         /start - start bot
         /track - choose url to follow
-        /untrack - stop following link
+        /untrack - stop following linkEntity
         /list - all following links
         """;
     String UNKNOWN_COMMAND = "Неизвестная команда. Введите /help";

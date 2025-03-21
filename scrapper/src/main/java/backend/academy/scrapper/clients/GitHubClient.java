@@ -1,6 +1,9 @@
 package backend.academy.scrapper.clients;
 
+import backend.academy.logger.LoggerHelper;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.sql.Timestamp;
+import java.time.OffsetDateTime;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,7 +20,7 @@ public class GitHubClient extends AbstractWebClient {
     }
 
     @Override
-    public Mono<Notifications> getNewNotifications(String url, String lastModified) {
+    public Mono<Notifications> getNewNotifications(String url, Timestamp lastModified) {
         String[] address = parseGitHubUrl(url);
         if (address == null || address.length != 2) {
             return Mono.just(new Notifications("Incorrect url:" + url, lastModified));
@@ -27,11 +30,14 @@ public class GitHubClient extends AbstractWebClient {
     }
 
     @Override
-    protected Notifications processResponse(JsonNode response, String lastModified) {
+    protected Notifications processResponse(JsonNode response, Timestamp lastModified) {
         if (!response.isEmpty()) {
             JsonNode latestEvent = response.get(0);
             String type = latestEvent.get("type").asText();
-            String createdAt = latestEvent.get("created_at").asText();
+            String createdAtString = latestEvent.get("created_at").asText();
+            LoggerHelper.info("Real time: " + createdAtString);
+            Timestamp createdAt =
+                    Timestamp.from(OffsetDateTime.parse(createdAtString).toInstant());
             return new Notifications("New event: " + type, createdAt);
         }
         return new Notifications("No new events", lastModified);

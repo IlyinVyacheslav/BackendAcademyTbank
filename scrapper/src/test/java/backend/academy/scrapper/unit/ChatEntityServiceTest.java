@@ -16,10 +16,10 @@ import backend.academy.scrapper.exc.ChatNotFoundException;
 import backend.academy.scrapper.exc.LinkAlreadyExistsException;
 import backend.academy.scrapper.exc.LinkNotFoundException;
 import backend.academy.scrapper.model.Chat;
-import backend.academy.scrapper.model.Link;
 import backend.academy.scrapper.model.LinkInfo;
-import backend.academy.scrapper.repository.ChatRepository;
-import backend.academy.scrapper.repository.LinkRepository;
+import backend.academy.scrapper.model.dto.Link;
+import backend.academy.scrapper.repository.MapChatRepository;
+import backend.academy.scrapper.repository.OldLinkRepository;
 import backend.academy.scrapper.service.ChatService;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,16 +32,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ChatServiceTest {
+class ChatEntityServiceTest {
     private final Long chatId = 1L;
     private final String linkUrl = "http://example.com";
     private final Long linkId = 100L;
 
     @Mock
-    private ChatRepository chatRepository;
+    private MapChatRepository mapChatRepository;
 
     @Mock
-    private LinkRepository linkRepository;
+    private OldLinkRepository oldLinkRepository;
 
     @InjectMocks
     private ChatService chatService;
@@ -59,42 +59,42 @@ class ChatServiceTest {
 
     @Test
     void registerChat_ShouldRegisterChat_WhenChatDoesNotExist() {
-        when(chatRepository.getChat(chatId)).thenReturn(null);
+        when(mapChatRepository.getChat(chatId)).thenReturn(null);
 
         chatService.registerChat(chatId);
 
-        verify(chatRepository, times(1)).addChat(any(Chat.class));
+        verify(mapChatRepository, times(1)).addChat(any(Chat.class));
     }
 
     @Test
     void registerChat_ShouldThrowException_WhenChatAlreadyExists() {
-        when(chatRepository.getChat(chatId)).thenReturn(chat);
+        when(mapChatRepository.getChat(chatId)).thenReturn(chat);
 
         assertThatThrownBy(() -> chatService.registerChat(chatId)).isInstanceOf(ChatAlreadyExistsException.class);
 
-        verify(chatRepository, never()).addChat(any(Chat.class));
+        verify(mapChatRepository, never()).addChat(any(Chat.class));
     }
 
     @Test
     void deleteChat_ShouldDeleteChat_WhenChatExists() {
-        when(chatRepository.removeChat(chatId)).thenReturn(true);
+        when(mapChatRepository.removeChat(chatId)).thenReturn(true);
 
         chatService.deleteChat(chatId);
 
-        verify(chatRepository, times(1)).removeChat(chatId);
+        verify(mapChatRepository, times(1)).removeChat(chatId);
     }
 
     @Test
     void deleteChat_ShouldThrowException_WhenChatDoesNotExist() {
-        when(chatRepository.removeChat(chatId)).thenReturn(false);
+        when(mapChatRepository.removeChat(chatId)).thenReturn(false);
 
         assertThatThrownBy(() -> chatService.deleteChat(chatId)).isInstanceOf(ChatNotFoundException.class);
     }
 
     @Test
     void getAllLinksFromChat_ShouldReturnLinks_WhenChatExists() {
-        when(chatRepository.getChat(chatId)).thenReturn(chat);
-        when(linkRepository.getLink(linkId)).thenReturn(link);
+        when(mapChatRepository.getChat(chatId)).thenReturn(chat);
+        when(oldLinkRepository.getLink(linkId)).thenReturn(link);
 
         ListLinksResponse response = chatService.getAllLinksFromChat(chatId);
 
@@ -105,7 +105,7 @@ class ChatServiceTest {
 
     @Test
     void getAllLinksFromChat_ShouldThrowException_WhenChatNotFound() {
-        when(chatRepository.getChat(chatId)).thenReturn(null);
+        when(mapChatRepository.getChat(chatId)).thenReturn(null);
 
         assertThatThrownBy(() -> chatService.getAllLinksFromChat(chatId)).isInstanceOf(ChatNotFoundException.class);
     }
@@ -113,20 +113,20 @@ class ChatServiceTest {
     @Test
     void addLinkToChat_ShouldAddLink_WhenNewLink() {
         Link newLink = new Link(101L, "https://new_example.com", null);
-        when(chatRepository.getChat(chatId)).thenReturn(chat);
-        when(linkRepository.getLinkByUrl(newLink.url())).thenReturn(null);
-        when(linkRepository.addLink(newLink.url())).thenReturn(newLink);
+        when(mapChatRepository.getChat(chatId)).thenReturn(chat);
+        when(oldLinkRepository.getLinkByUrl(newLink.url())).thenReturn(null);
+        when(oldLinkRepository.addLink(newLink.url())).thenReturn(newLink);
 
         chatService.addLinkToChat(
                 chatId, new AddLinkRequest(newLink.url(), Collections.emptyList(), Collections.emptyList()));
 
-        verify(chatRepository, times(1)).updateChat(eq(chatId), any(Chat.class));
+        verify(mapChatRepository, times(1)).updateChat(eq(chatId), any(Chat.class));
     }
 
     @Test
     void addLinkToChat_ShouldThrowException_WhenLinkAlreadyExists() {
-        when(chatRepository.getChat(chatId)).thenReturn(chat);
-        when(linkRepository.getLinkByUrl(linkUrl)).thenReturn(link);
+        when(mapChatRepository.getChat(chatId)).thenReturn(chat);
+        when(oldLinkRepository.getLinkByUrl(linkUrl)).thenReturn(link);
 
         assertThatThrownBy(() -> chatService.addLinkToChat(
                         chatId, new AddLinkRequest(linkUrl, Collections.emptyList(), Collections.emptyList())))
@@ -136,7 +136,7 @@ class ChatServiceTest {
 
     @Test
     void addLinkToChat_ShouldThrowException_WhenChatNotFound() {
-        when(chatRepository.getChat(chatId)).thenReturn(null);
+        when(mapChatRepository.getChat(chatId)).thenReturn(null);
 
         assertThatThrownBy(() -> chatService.addLinkToChat(
                         chatId, new AddLinkRequest(linkUrl, Collections.emptyList(), Collections.emptyList())))
@@ -145,18 +145,18 @@ class ChatServiceTest {
 
     @Test
     void deleteLinkFromChat_ShouldDeleteLink_WhenLinkExists() {
-        when(chatRepository.getChat(chatId)).thenReturn(chat);
-        when(linkRepository.getLinkByUrl(linkUrl)).thenReturn(link);
-        when(chatRepository.removeLinkFromChatById(chatId, linkId)).thenReturn(true);
+        when(mapChatRepository.getChat(chatId)).thenReturn(chat);
+        when(oldLinkRepository.getLinkByUrl(linkUrl)).thenReturn(link);
+        when(mapChatRepository.removeLinkFromChatById(chatId, linkId)).thenReturn(true);
 
         chatService.deleteLinkFromChat(chatId, link.url());
 
-        verify(chatRepository, times(1)).removeLinkFromChatById(chatId, linkId);
+        verify(mapChatRepository, times(1)).removeLinkFromChatById(chatId, linkId);
     }
 
     @Test
     void deleteLinkFromChat_ShouldThrowException_WhenChatDoesNotExist() {
-        when(chatRepository.getChat(chatId)).thenReturn(null);
+        when(mapChatRepository.getChat(chatId)).thenReturn(null);
 
         assertThatThrownBy(() -> chatService.deleteLinkFromChat(chatId, linkUrl))
                 .isInstanceOf(ChatNotFoundException.class);
@@ -164,8 +164,8 @@ class ChatServiceTest {
 
     @Test
     void deleteLinkFromChat_ShouldThrowException_WhenLinkDoesNotExist() {
-        when(chatRepository.getChat(chatId)).thenReturn(chat);
-        when(linkRepository.getLinkByUrl(linkUrl)).thenReturn(null);
+        when(mapChatRepository.getChat(chatId)).thenReturn(chat);
+        when(oldLinkRepository.getLinkByUrl(linkUrl)).thenReturn(null);
 
         assertThatThrownBy(() -> chatService.deleteLinkFromChat(chatId, linkUrl))
                 .isInstanceOf(LinkNotFoundException.class);
@@ -173,9 +173,9 @@ class ChatServiceTest {
 
     @Test
     void deleteLinkFromChat_ShouldThrowException_WhenLinkNotInChat() {
-        when(chatRepository.getChat(chatId)).thenReturn(chat);
-        when(linkRepository.getLinkByUrl(linkUrl)).thenReturn(link);
-        when(chatRepository.removeLinkFromChatById(chatId, linkId)).thenReturn(false);
+        when(mapChatRepository.getChat(chatId)).thenReturn(chat);
+        when(oldLinkRepository.getLinkByUrl(linkUrl)).thenReturn(link);
+        when(mapChatRepository.removeLinkFromChatById(chatId, linkId)).thenReturn(false);
 
         assertThatThrownBy(() -> chatService.deleteLinkFromChat(chatId, linkUrl))
                 .isInstanceOf(LinkNotFoundException.class)
@@ -185,7 +185,7 @@ class ChatServiceTest {
     @Test
     void getAllLinks() {
         List<Link> expectedLinks = List.of(link);
-        when(linkRepository.getAllLinks()).thenReturn(expectedLinks);
+        when(oldLinkRepository.getAllLinks()).thenReturn(expectedLinks);
 
         List<Link> links = chatService.getAllLinks();
 
@@ -194,7 +194,7 @@ class ChatServiceTest {
 
     @Test
     void updateLinkLastModified_ShouldThrowException_WhenLinkDoesNotExist() {
-        when(linkRepository.getLink(linkId)).thenReturn(null);
+        when(oldLinkRepository.getLink(linkId)).thenReturn(null);
 
         assertThatThrownBy(() -> chatService.updateLinkLastModifiedAt(linkId, null))
                 .isInstanceOf(LinkNotFoundException.class);

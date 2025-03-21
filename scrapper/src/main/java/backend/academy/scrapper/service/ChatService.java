@@ -5,13 +5,16 @@ import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
 import backend.academy.scrapper.exc.ChatAlreadyExistsException;
 import backend.academy.scrapper.exc.ChatNotFoundException;
-import backend.academy.scrapper.exc.LinkAlreadyExistsException;
 import backend.academy.scrapper.exc.LinkNotFoundException;
-import backend.academy.scrapper.model.Chat;
-import backend.academy.scrapper.model.Link;
-import backend.academy.scrapper.model.LinkInfo;
+import backend.academy.scrapper.model.dto.Link;
 import backend.academy.scrapper.repository.ChatRepository;
+import backend.academy.scrapper.repository.FilterRepository;
 import backend.academy.scrapper.repository.LinkRepository;
+import backend.academy.scrapper.repository.TagRepository;
+import backend.academy.scrapper.repository.jdbc.FilterRepositoryJDBC;
+import backend.academy.scrapper.repository.jdbc.LinkRepositoryJDBC;
+import backend.academy.scrapper.repository.jdbc.TagRepositoryJDBC;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,19 +23,27 @@ import org.springframework.stereotype.Service;
 @Service
 public class ChatService {
     private final ChatRepository chatRepository;
-    private final LinkRepository linkRepository;
+    private final LinkRepository linkRepositoryJDBC;
+    private final TagRepository tagRepositoryJDBC;
+    private final FilterRepository filterRepositoryJDBC;
 
     @Autowired
-    public ChatService(ChatRepository chatRepository, LinkRepository linkRepository) {
+    public ChatService(
+            ChatRepository chatRepository,
+            LinkRepositoryJDBC linkRepositoryJDBC,
+            TagRepositoryJDBC tagRepositoryJDBC,
+            FilterRepositoryJDBC filterRepositoryJDBC) {
         this.chatRepository = chatRepository;
-        this.linkRepository = linkRepository;
+        this.linkRepositoryJDBC = linkRepositoryJDBC;
+        this.tagRepositoryJDBC = tagRepositoryJDBC;
+        this.filterRepositoryJDBC = filterRepositoryJDBC;
     }
 
     public void registerChat(Long chatId) {
-        if (chatRepository.getChat(chatId) != null) {
+        if (chatRepository.existsChat(chatId)) {
             throw new ChatAlreadyExistsException(chatId);
         }
-        chatRepository.addChat(new Chat(chatId));
+        chatRepository.addChat(chatId);
     }
 
     public void deleteChat(Long chatId) {
@@ -42,70 +53,57 @@ public class ChatService {
     }
 
     public ListLinksResponse getAllLinksFromChat(Long chatId) {
-        Chat chat = chatRepository.getChat(chatId);
-        if (chat == null) {
-            throw new ChatNotFoundException(chatId);
-        }
-        List<LinkResponse> linkResponses = chat.linksToFollow().stream()
-                .map(linkInfo -> {
-                    Link link = linkRepository.getLink(linkInfo.linkId());
-                    return new LinkResponse(link.id(), link.url(), linkInfo.tags(), linkInfo.filters());
+        List<Long> linkIds = linkRepositoryJDBC.findLinksByChatId(chatId);
+        List<LinkResponse> linkResponses = linkIds.stream()
+                .map(linkId -> {
+                    List<String> tags = tagRepositoryJDBC.getTagsByChatIdAndLinkId(chatId, linkId);
+                    List<String> filters = filterRepositoryJDBC.getFiltersByChatIdAndLinkId(chatId, linkId);
+                    return new LinkResponse(linkId, linkRepositoryJDBC.getLinkUrlById(linkId), tags, filters);
                 })
                 .collect(Collectors.toList());
         return new ListLinksResponse(linkResponses, linkResponses.size());
     }
 
-    public void addLinkToChat(Long chatId, AddLinkRequest addLinkRequest) {
-        String url = addLinkRequest.link();
-        Link link = linkRepository.getLinkByUrl(url);
-        if (link == null) {
-            link = linkRepository.addLink(url);
-        }
-
-        Chat chat = chatRepository.getChat(chatId);
-        if (chat == null) {
+    public void addLinkToChat(Long chatId, AddLinkRequest linkRequest) {
+        if (!chatRepository.existsChat(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
-
-        if (chat.containsUrl(link.id())) {
-            throw new LinkAlreadyExistsException(chatId, url);
+        Long linkId = linkRepositoryJDBC.getLinkIdByUrl(linkRequest.link());
+        if (linkId == null) {
+            linkId = linkRepositoryJDBC.addLink(chatId, linkRequest.link());
         }
-
-        chat.addLink(new LinkInfo(link.id(), addLinkRequest.tags(), addLinkRequest.filters()));
-
-        chatRepository.updateChat(chatId, chat);
+        Long finalLinkId = linkId;
+        linkRequest.tags().forEach(tag -> tagRepositoryJDBC.addTag(chatId, finalLinkId, tag));
+        linkRequest.filters().forEach(filter -> filterRepositoryJDBC.addFilter(chatId, finalLinkId, filter));
     }
 
     public void deleteLinkFromChat(Long chatId, String url) {
-        if (chatRepository.getChat(chatId) == null) {
+        if (!chatRepository.existsChat(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
-        Link link = linkRepository.getLinkByUrl(url);
-        if (link == null) {
+
+        Long linkId = linkRepositoryJDBC.getLinkIdByUrl(url);
+        if (linkId == null) {
             throw new LinkNotFoundException(url);
         }
-        if (!chatRepository.removeLinkFromChatById(chatId, link.id())) {
+
+        if (!linkRepositoryJDBC.removeLinkFromChatById(chatId, linkId)) {
             throw new LinkNotFoundException(chatId, url);
         }
     }
 
     public List<Link> getAllLinks() {
-        return linkRepository.getAllLinks();
+        return linkRepositoryJDBC.getAllLinks();
     }
 
-    public void updateLinkLastModifiedAt(Long id, String modifiedAt) {
-        Link oldLink = linkRepository.getLink(id);
-        if (oldLink == null) {
-            throw new LinkNotFoundException(String.format("There is no link with id %d", id));
+    public void updateLinkLastModifiedAt(Long linkId, Timestamp modifiedAt) {
+        if (linkRepositoryJDBC.getLinkUrlById(linkId) == null) {
+            throw new LinkNotFoundException(String.format("There is no link with linkId %d", linkId));
         }
-        linkRepository.updateLink(new Link(oldLink.id(), oldLink.url(), modifiedAt));
+        linkRepositoryJDBC.updateLink(linkId, modifiedAt);
     }
 
     public List<Long> getAllChatIdsByLinkId(Long linkId) {
-        return chatRepository
-                .getAllChatsAsStream()
-                .filter(chat -> chat.containsUrl(linkId))
-                .map(Chat::chatId)
-                .collect(Collectors.toList());
+        return linkRepositoryJDBC.getAllChatIdsByLinkId(linkId);
     }
 }

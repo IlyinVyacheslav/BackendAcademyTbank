@@ -1,14 +1,13 @@
-app:
-  github-token: ${GITHUB_TOKEN} # env variable
-  stackoverflow:
-    key: ${SO_TOKEN_KEY}
-    access-token: ${SO_ACCESS_TOKEN}
-
 spring:
   application:
     name: Scrapper
   liquibase:
     enabled: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/scrapper
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: validate
@@ -21,3 +20,9 @@ springdoc:
   swagger-ui:
     enabled: true
     path: /swagger-ui
+
+app:
+  github-token: ${GITHUB_TOKEN} # env variable
+  stackoverflow:
+    key: ${SO_TOKEN_KEY}
+    access-token: ${SO_ACCESS_TOKEN}

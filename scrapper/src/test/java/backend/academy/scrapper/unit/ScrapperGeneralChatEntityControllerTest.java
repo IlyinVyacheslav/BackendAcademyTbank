@@ -31,7 +31,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ScrapperGeneralChatController.class)
-public class ScrapperGeneralChatControllerTest {
+public class ScrapperGeneralChatEntityControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -150,8 +150,8 @@ public class ScrapperGeneralChatControllerTest {
                 .andExpect(jsonPath("$.description").value("Ошибка в репозитории"))
                 .andExpect(jsonPath("$.code").value("404"))
                 .andExpect(jsonPath("$.exceptionName").value("ChatNotFoundException"))
-                .andExpect(
-                        jsonPath("$.exceptionMessage").value(String.format("Chat with id: %d does not exist", chatId)))
+                .andExpect(jsonPath("$.exceptionMessage")
+                        .value(String.format("Chat with linkId: %d does not exist", chatId)))
                 .andExpect(jsonPath("$.stackTrace").isArray())
                 .andExpect(jsonPath("$.stackTrace.length()").value(0));
     }
