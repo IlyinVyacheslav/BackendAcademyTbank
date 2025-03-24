@@ -1,6 +1,6 @@
-package backend.academy.scrapper.repository;
+package backend.academy.scrapper.dao;
 
-public interface ChatRepository {
+public interface ChatDao {
     boolean existsChat(long chatId);
 
     void addChat(long charId);

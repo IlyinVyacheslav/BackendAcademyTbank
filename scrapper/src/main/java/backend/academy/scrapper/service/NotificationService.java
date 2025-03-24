@@ -60,10 +60,10 @@ public class NotificationService {
             LoggerHelper.info("No updates happened", Map.of("response", resp));
         } else {
             try {
-                chatService.updateLinkLastModifiedAt(link.linkId(), updatedAt);
-                List<Long> chatsWithLinkId = chatService.getAllChatIdsByLinkId(link.linkId());
+                chatService.updateLinkLastModifiedAt(link.id(), updatedAt);
+                List<Long> chatsWithLinkId = chatService.getAllChatIdsByLinkId(link.id());
                 botClient
-                        .postUpdates(new LinkUpdate(link.linkId(), link.url(), resp.message(), chatsWithLinkId))
+                        .postUpdates(new LinkUpdate(link.id(), link.url(), resp.message(), chatsWithLinkId))
                         .doOnError(error -> LoggerHelper.error("Error while sending update to tgBot", error))
                         .doOnSuccess(res -> LoggerHelper.info("Update sent successfully", Map.of("response", res)))
                         .subscribe();

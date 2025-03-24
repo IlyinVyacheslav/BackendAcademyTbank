@@ -29,6 +29,6 @@ public class LinkEntity {
     private String url;
 
     @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "last_modified", nullable = false)
+    @Column(name = "last_modified")
     private Timestamp lastModified;
 }

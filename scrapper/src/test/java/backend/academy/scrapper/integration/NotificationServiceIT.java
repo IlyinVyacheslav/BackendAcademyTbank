@@ -78,7 +78,7 @@ public class NotificationServiceIT {
 
         verify(botClient, never()).postUpdates(any(LinkUpdate.class));
         assertThatThrownBy(() -> chatService.updateLinkLastModifiedAt(
-                        nonExistingtLink.linkId(), Timestamp.valueOf("2024-02-22T10:00:00Z")))
+                        nonExistingtLink.id(), Timestamp.valueOf("2024-02-22T10:00:00Z")))
                 .isInstanceOf(LinkNotFoundException.class);
     }
 
@@ -101,8 +101,7 @@ public class NotificationServiceIT {
 
         notificationService.checkNotifications();
 
-        verify(chatService, never())
-                .updateLinkLastModifiedAt(eq(previousLink.linkId()), Timestamp.valueOf(anyString()));
+        verify(chatService, never()).updateLinkLastModifiedAt(eq(previousLink.id()), Timestamp.valueOf(anyString()));
         verify(botClient, never()).postUpdates(any(LinkUpdate.class));
     }
 
@@ -114,8 +113,7 @@ public class NotificationServiceIT {
 
         notificationService.checkNotifications();
 
-        verify(chatService, times(1))
-                .updateLinkLastModifiedAt(link.linkId(), Timestamp.valueOf("2024-02-22T10:00:00Z"));
+        verify(chatService, times(1)).updateLinkLastModifiedAt(link.id(), Timestamp.valueOf("2024-02-22T10:00:00Z"));
         verify(botClient, times(1)).postUpdates(captor.capture());
         LinkUpdate linkUpdate = captor.getValue();
         assertThat(linkUpdate.url()).isEqualTo(link.url());

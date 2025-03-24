@@ -1,15 +1,17 @@
-package backend.academy.scrapper.repository.jdbc;
+package backend.academy.scrapper.dao.jdbc;
 
-import backend.academy.scrapper.repository.FilterRepository;
+import backend.academy.scrapper.dao.FilterDao;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+@Profile("jdbc")
 @Repository
 @RequiredArgsConstructor
-public class FilterRepositoryJDBC implements FilterRepository {
+public class FilterDaoJdbc implements FilterDao {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     @Override
@@ -25,8 +27,8 @@ public class FilterRepositoryJDBC implements FilterRepository {
     }
 
     @Override
-    public void removeFilter(Long chatId, Long linkId, String filter) {
-        String sql = "DELETE FROM filters WHERE chat_id = :chatId AND link_id = :linkId AND filter = :filter";
-        jdbcTemplate.update(sql, Map.of("chatId", chatId, "linkId", linkId, "filter", filter));
+    public void removeAllFiltersFromChatByLinkId(Long chatId, Long linkId) {
+        String sql = "DELETE FROM filters WHERE chat_id = :chatId AND link_id = :linkId";
+        jdbcTemplate.update(sql, Map.of("chatId", chatId, "linkId", linkId));
     }
 }

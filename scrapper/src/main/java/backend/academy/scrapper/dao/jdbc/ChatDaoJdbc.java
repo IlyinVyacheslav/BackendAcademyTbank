@@ -1,14 +1,16 @@
-package backend.academy.scrapper.repository.jdbc;
+package backend.academy.scrapper.dao.jdbc;
 
-import backend.academy.scrapper.repository.ChatRepository;
+import backend.academy.scrapper.dao.ChatDao;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+@Profile("jdbc")
 @Repository
 @RequiredArgsConstructor
-public class ChatRepositoryJDBC implements ChatRepository {
+public class ChatDaoJdbc implements ChatDao {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     @Override

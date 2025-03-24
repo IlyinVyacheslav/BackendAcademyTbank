@@ -1,12 +1,14 @@
-package backend.academy.scrapper.repository;
+package backend.academy.scrapper.dao;
 
 import backend.academy.scrapper.model.dto.Link;
 import java.sql.Timestamp;
 import java.util.List;
 
-public interface LinkRepository {
+public interface LinkDao {
 
-    Long addLink(long chatId, String url);
+    Long addLink(String url);
+
+    void addLinkToChat(long chatId, long linkId);
 
     Long getLinkIdByUrl(String url);
 

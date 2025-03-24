@@ -2,6 +2,7 @@ package backend.academy.scrapper.clients;
 
 import backend.academy.logger.LoggerHelper;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.net.URI;
 import java.sql.Timestamp;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +22,7 @@ public abstract class AbstractWebClient implements WebSiteClient {
     protected Mono<Notifications> fetchNotifications(String uri, Timestamp lastModified) {
         WebClient.RequestHeadersSpec<?> request = webClient.get().uri(uri);
 
-        if (uri.startsWith("github.com") && lastModified != null) {
+        if ("github.com".equals(URI.create(uri).getHost()) && lastModified != null) {
             request.header(HttpHeaders.IF_MODIFIED_SINCE, lastModified.toString());
         }
 

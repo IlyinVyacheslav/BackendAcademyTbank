@@ -25,6 +25,7 @@ services:
       - --url=jdbc:postgresql://postgresql:5432/scrapper
       - --username=postgres
       - --password=postgres
+#      - clear-checksums
       - update
     volumes:
       - ./migrations:/changesets

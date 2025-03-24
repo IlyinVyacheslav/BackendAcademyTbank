@@ -1,29 +1,32 @@
-package backend.academy.scrapper.repository.jdbc;
+package backend.academy.scrapper.dao.jdbc;
 
+import backend.academy.scrapper.dao.LinkDao;
 import backend.academy.scrapper.model.dto.Link;
-import backend.academy.scrapper.repository.LinkRepository;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+@Profile("jdbc")
 @Repository
 @RequiredArgsConstructor
-public class LinkRepositoryJDBC implements LinkRepository {
+public class LinkDaoJdbc implements LinkDao {
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     @Override
-    public Long addLink(long chatId, String url) {
+    public Long addLink(String url) {
         String sql = "INSERT INTO links (url, last_modified) VALUES (:url, NOW()) RETURNING link_id";
-        Long linkId = jdbcTemplate.queryForObject(sql, Map.of("url", url), Long.class);
+        return jdbcTemplate.queryForObject(sql, Map.of("url", url), Long.class);
+    }
 
-        sql = "INSERT INTO chat_links (chat_id, link_id) VALUES (:chatId, :linkId)";
+    @Override
+    public void addLinkToChat(long chatId, long linkId) {
+        String sql = "INSERT INTO chat_links (chat_id, link_id) VALUES (:chatId, :linkId)";
         jdbcTemplate.update(sql, Map.of("chatId", chatId, "linkId", linkId));
-
-        return linkId;
     }
 
     @Override
