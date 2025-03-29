@@ -5,3 +5,4 @@
 - [Logs analyzer](backend_academy_2024_project_3-java-IlyinVyacheslav)
 - [Multithreaded fractal flame rendering](backend_academy_2024_project_4-java-IlyinVyacheslav)
 - [Measuring the performance of accessing a class method](backend_academy_2024_project_5-java-IlyinVyacheslav)
+### Second semester
