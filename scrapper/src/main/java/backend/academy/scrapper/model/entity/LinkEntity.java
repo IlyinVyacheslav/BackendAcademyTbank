@@ -2,6 +2,7 @@ package backend.academy.scrapper.model.entity;
 
 import jakarta.persistence.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,7 +24,7 @@ public class LinkEntity {
             name = "chat_links",
             joinColumns = @JoinColumn(name = "link_id"),
             inverseJoinColumns = @JoinColumn(name = "chat_id"))
-    private List<ChatEntity> chats;
+    private List<ChatEntity> chats = new ArrayList<>();
 
     @Column(name = "url", nullable = false)
     private String url;

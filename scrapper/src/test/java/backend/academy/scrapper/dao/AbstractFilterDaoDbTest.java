@@ -1,8 +1,7 @@
-package backend.academy.scrapper.dao.jdbc;
+package backend.academy.scrapper.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import backend.academy.scrapper.dao.FilterDao;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,15 +10,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.EmptySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration(classes = FilterDaoJdbc.class)
-public class FilterDaoDbTest extends DbTest {
+public abstract class AbstractFilterDaoDbTest extends DbTest {
     @Autowired
-    private NamedParameterJdbcTemplate jdbcTemplate;
+    protected NamedParameterJdbcTemplate jdbcTemplate;
 
     @Autowired
-    private FilterDao filterDao;
+    protected FilterDao filterDao;
 
     private long chatId = 387464794;
     private long linkId = 1;
@@ -29,7 +26,8 @@ public class FilterDaoDbTest extends DbTest {
     public void createChatAndLink() {
         jdbcTemplate.update("INSERT INTO chats (chat_id) VALUES (:chatId)", Map.of("chatId", chatId));
         jdbcTemplate.update(
-                "INSERT INTO links (url) VALUES ('https://www.google.com/')", EmptySqlParameterSource.INSTANCE);
+                "INSERT INTO links (link_id, url) VALUES (1, 'https://www.google.com/')",
+                EmptySqlParameterSource.INSTANCE);
     }
 
     @Test

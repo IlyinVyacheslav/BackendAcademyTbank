@@ -1,8 +1,7 @@
-package backend.academy.scrapper.dao.jdbc;
+package backend.academy.scrapper.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import backend.academy.scrapper.dao.LinkDao;
 import backend.academy.scrapper.model.dto.Link;
 import java.sql.Timestamp;
 import java.util.List;
@@ -12,15 +11,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration(classes = LinkDaoJdbc.class)
-public class LinkDaoDbTest extends DbTest {
+public abstract class AbstractLinkDaoDbTest extends DbTest {
     @Autowired
-    private NamedParameterJdbcTemplate jdbcTemplate;
+    protected NamedParameterJdbcTemplate jdbcTemplate;
 
     @Autowired
-    private LinkDao linkDao;
+    protected LinkDao linkDao;
 
     private String url = "https://www.google.com";
     private long chatId = 387464794;
@@ -29,9 +26,10 @@ public class LinkDaoDbTest extends DbTest {
         jdbcTemplate.update("INSERT INTO chats (chat_id) VALUES (:chatId)", Map.of("chatId", chatId));
     }
 
-    private void addLinkAndChatToDb() {
+    private Long addLinkAndChatToDb() {
         addChatToDb(chatId);
-        jdbcTemplate.update("INSERT INTO links (url) VALUES (:url)", Map.of("url", url));
+        return linkDao.addLink(url);
+        //        jdbcTemplate.update("INSERT INTO links (url) VALUES (:url)", Map.of("url", url));
     }
 
     private @Nullable Integer getNumberOfEntriesIn_chat_links(long linkId) {
@@ -44,28 +42,28 @@ public class LinkDaoDbTest extends DbTest {
     @Test
     @DisplayName("Успешное создание ссылки")
     void testAddLink() {
-        linkDao.addLink(url);
+        Long linkId = linkDao.addLink(url);
         Long actualLinkId = linkDao.getLinkIdByUrl(url);
 
-        assertThat(actualLinkId).isEqualTo(1);
+        assertThat(actualLinkId).isEqualTo(linkId);
     }
 
     @Test
     @DisplayName("Успешное добавление ссылки в чат")
     void testAddLinkToChat() {
-        addLinkAndChatToDb();
+        Long likId = addLinkAndChatToDb();
 
-        linkDao.addLinkToChat(chatId, 1);
+        linkDao.addLinkToChat(chatId, likId);
 
-        assertThat(getNumberOfEntriesIn_chat_links(1)).isEqualTo(1);
+        assertThat(getNumberOfEntriesIn_chat_links(likId)).isEqualTo(1);
     }
 
     @Test
     @DisplayName("Успешное получение ссылки по id")
     void testGetLinkUrlById() {
-        linkDao.addLink(url);
+        Long linkId = linkDao.addLink(url);
 
-        String actualUrl = linkDao.getLinkUrlById(1L);
+        String actualUrl = linkDao.getLinkUrlById(linkId);
 
         assertThat(actualUrl).isEqualTo(url);
     }
@@ -73,24 +71,24 @@ public class LinkDaoDbTest extends DbTest {
     @Test
     @DisplayName("Успешное удаление ссылки из чата")
     void testRemoveLinkFromChat() {
-        addLinkAndChatToDb();
+        Long linkId = addLinkAndChatToDb();
 
-        linkDao.removeLinkFromChatById(chatId, 1);
+        linkDao.removeLinkFromChatById(chatId, linkId);
 
-        assertThat(getNumberOfEntriesIn_chat_links(1)).isZero();
+        assertThat(getNumberOfEntriesIn_chat_links(linkId)).isZero();
     }
 
     @Test
     @DisplayName("Успешное обновление ссылки")
     void testUpdateLink() {
         Timestamp lastModified = Timestamp.valueOf("2021-01-01 00:00:00.000000");
-        linkDao.addLink(url);
+        Long linkId = linkDao.addLink(url);
 
-        linkDao.updateLink(1L, lastModified);
+        linkDao.updateLink(linkId, lastModified);
 
         Timestamp actualLastModified = jdbcTemplate.queryForObject(
-                "SELECT last_modified FROM links WHERE link_id = :linkId", Map.of("linkId", 1L), Timestamp.class);
-        assertThat(linkDao.getLinkUrlById(1L)).isEqualTo(url);
+                "SELECT last_modified FROM links WHERE link_id = :linkId", Map.of("linkId", linkId), Timestamp.class);
+        assertThat(linkDao.getLinkUrlById(linkId)).isEqualTo(url);
         assertThat(actualLastModified).isEqualTo(lastModified);
     }
 
@@ -99,13 +97,14 @@ public class LinkDaoDbTest extends DbTest {
     void testGetLinksByChatId() {
         addLinkAndChatToDb();
         List<String> links = List.of("https://www.yandex.ru", "https://www.mail.ru", "https://www.amazon.com");
+        List<Long> expectedIndices =
+                links.stream().map(link -> linkDao.addLink(link)).toList();
 
-        links.forEach(linkDao::addLink);
         links.forEach(link -> linkDao.addLinkToChat(chatId, linkDao.getLinkIdByUrl(link)));
         List<Long> actualLinks = linkDao.findLinksByChatId(chatId);
 
         assertThat(actualLinks).hasSize(3);
-        assertThat(actualLinks).containsExactly(2L, 3L, 4L);
+        assertThat(actualLinks).containsExactlyInAnyOrderElementsOf(expectedIndices);
     }
 
     @Test
@@ -117,22 +116,20 @@ public class LinkDaoDbTest extends DbTest {
         List<Link> allLinks = linkDao.getAllLinks();
 
         assertThat(allLinks).hasSize(5);
-        assertThat(allLinks)
-                .extracting(Link::url)
-                .containsExactly("aaa.com", "bbb.com", "ccc.com", "ddd.com", "eee.com");
+        assertThat(allLinks).extracting(Link::url).containsExactlyElementsOf(links);
     }
 
     @Test
     @DisplayName("Успешное получение всех чатов по ссылке")
     void testGetAllChatsByLinkId() {
         List<Long> chats = List.of(1L, 2L, 3L, 4L, 5L);
-        linkDao.addLink(url);
+        Long linkId = linkDao.addLink(url);
         chats.forEach(id -> {
             addChatToDb(id);
-            linkDao.addLinkToChat(id, 1L);
+            linkDao.addLinkToChat(id, linkId);
         });
 
-        List<Long> actualChats = linkDao.getAllChatIdsByLinkId(1L);
+        List<Long> actualChats = linkDao.getAllChatIdsByLinkId(linkId);
 
         assertThat(actualChats).containsExactlyInAnyOrderElementsOf(chats);
     }

@@ -1,17 +1,14 @@
-package backend.academy.scrapper.dao.jdbc;
+package backend.academy.scrapper.dao;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import backend.academy.scrapper.dao.ChatDao;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
 
-@ContextConfiguration(classes = ChatDaoJdbc.class)
-public class ChatDaoDbTest extends DbTest {
+public abstract class AbstractChatDaoDbTest extends DbTest {
     @Autowired
-    private ChatDao chatDao;
+    protected ChatDao chatDao;
 
     private long chatId = 387464794;
 
