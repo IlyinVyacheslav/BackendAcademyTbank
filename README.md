@@ -1,5 +1,5 @@
 ## Java Tinkoff backend academy projects, 2024
-### First semester
+### First semester 
 - [Hangman console game](backend_academy_2024_project_1-java-IlyinVyacheslav)
 - [Maze generation and solving](backend_academy_2024_project_2-java-IlyinVyacheslav)
 - [Logs analyzer](backend_academy_2024_project_3-java-IlyinVyacheslav)
