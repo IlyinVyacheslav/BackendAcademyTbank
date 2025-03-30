@@ -31,7 +31,7 @@ public class GitHubClient extends AbstractWebClient {
     }
 
     @Override
-    protected Notifications processResponse(JsonNode response, Timestamp lastModified) {
+    public Notifications processResponse(JsonNode response, Timestamp lastModified) {
         LoggerHelper.info("GitHub response" + response);
         if (!response.isEmpty()) {
             JsonNode latestEvent = response.get(0);

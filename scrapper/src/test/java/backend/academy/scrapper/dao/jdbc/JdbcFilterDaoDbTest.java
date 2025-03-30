@@ -7,5 +7,5 @@ import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(classes = FilterDaoJdbc.class)
 @EnableJpaRepositories
-@ActiveProfiles("jdbc")
+@ActiveProfiles("SQL")
 public class JdbcFilterDaoDbTest extends AbstractFilterDaoDbTest {}

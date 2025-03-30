@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-@Profile("jdbc")
+@Profile("SQL")
 @Repository
 @RequiredArgsConstructor
 public class TagDaoJdbc implements TagDao {

@@ -7,5 +7,5 @@ import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(classes = TagDaoJdbc.class)
 @EnableJpaRepositories
-@ActiveProfiles("jdbc")
+@ActiveProfiles("SQL")
 public class JdbcTagDaoDbTest extends AbstractTagDaoDbTest {}

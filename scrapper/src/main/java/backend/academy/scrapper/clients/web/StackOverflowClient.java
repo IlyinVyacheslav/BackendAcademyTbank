@@ -32,10 +32,32 @@ public class StackOverflowClient extends AbstractWebClient {
     protected Notifications processResponse(JsonNode response, Timestamp lastModified) {
         JsonNode items = response.get("items");
         if (items != null && items.isArray() && !items.isEmpty()) {
-            JsonNode latestQuestion = items.get(0);
+            JsonNode latestActivity = items.get(0);
+            String title =
+                    latestActivity.has("title") ? latestActivity.get("title").asText() : "Unknown Title";
+            String username =
+                    latestActivity.has("owner") && latestActivity.get("owner").has("display_name")
+                            ? latestActivity.get("owner").get("display_name").asText()
+                            : "Unknown User";
             Timestamp lastActivityDate =
-                    Timestamp.valueOf(latestQuestion.get("last_activity_date").asText());
-            return new Notifications("New activity on question", lastActivityDate);
+                    new Timestamp(latestActivity.get("last_activity_date").asLong() * 1000);
+            String preview = latestActivity.has("body")
+                    ? latestActivity
+                            .get("body")
+                            .asText()
+                            .replaceAll("<.*?>", "")
+                            .substring(
+                                    0,
+                                    Math.min(
+                                            200,
+                                            latestActivity.get("body").asText().length()))
+                    : "No preview available";
+
+            String message = String.format(
+                    "New activity on question: '%s' by %s at %s%nPreview: %s",
+                    title, username, lastActivityDate, preview);
+
+            return new Notifications(message, lastActivityDate);
         }
         return new Notifications("No new activity", lastModified);
     }

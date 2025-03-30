@@ -16,7 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-@Profile("data-jpa")
+@Profile("ORM")
 @Repository
 @RequiredArgsConstructor
 public class LinkDaoDataJpa implements LinkDao {

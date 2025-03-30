@@ -12,6 +12,8 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  profiles:
+    active: ${app.access-type}
 
 server:
   port: 8081
@@ -27,3 +29,4 @@ app:
     key: ${SO_TOKEN_KEY}
     access-token: ${SO_ACCESS_TOKEN}
   pageSize: 50
+  access-type: SQL

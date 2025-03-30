@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
-@Profile("data-jpa")
+@Profile("ORM")
 @Repository
 @RequiredArgsConstructor
 public class ChatDaoDataJpa implements ChatDao {

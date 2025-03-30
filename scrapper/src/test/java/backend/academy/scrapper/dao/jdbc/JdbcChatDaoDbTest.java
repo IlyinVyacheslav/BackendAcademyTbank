@@ -7,5 +7,5 @@ import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(classes = ChatDaoJdbc.class)
 @EnableJpaRepositories
-@ActiveProfiles("jdbc")
+@ActiveProfiles("SQL")
 public class JdbcChatDaoDbTest extends AbstractChatDaoDbTest {}

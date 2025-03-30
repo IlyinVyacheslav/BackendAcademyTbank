@@ -11,7 +11,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-@Profile("jdbc")
+@Profile("SQL")
 @Repository
 @RequiredArgsConstructor
 public class LinkDaoJdbc implements LinkDao {

@@ -9,5 +9,5 @@ import org.springframework.test.context.ContextConfiguration;
 @ContextConfiguration(classes = FilterDaoDataJpa.class)
 @EnableJpaRepositories(basePackages = "backend.academy.scrapper.dao.datajpa.repo")
 @EntityScan("backend.academy.scrapper.model.entity")
-@ActiveProfiles("data-jpa")
+@ActiveProfiles("ORM")
 public class JpaFilterDaoDbTest extends AbstractFilterDaoDbTest {}

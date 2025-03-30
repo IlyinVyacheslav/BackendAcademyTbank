@@ -48,7 +48,7 @@ class ChatServiceTest {
     private FilterDao filterDao;
 
     @Spy
-    private ScrapperConfig config = new ScrapperConfig("token", null, 10);
+    private ScrapperConfig config = new ScrapperConfig("token", null, 10, "SQL");
 
     @InjectMocks
     private ChatService chatService;

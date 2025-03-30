@@ -7,5 +7,5 @@ import org.springframework.test.context.ContextConfiguration;
 
 @ContextConfiguration(classes = LinkDaoJdbc.class)
 @EnableJpaRepositories
-@ActiveProfiles("jdbc")
+@ActiveProfiles("SQL")
 public class JdbcLinkDaoDbTest extends AbstractLinkDaoDbTest {}
