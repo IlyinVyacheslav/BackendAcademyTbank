@@ -1,4 +1,4 @@
-package backend.academy.scrapper.clients;
+package backend.academy.scrapper.clients.bot;
 
 import backend.academy.dto.LinkUpdate;
 import backend.academy.logger.LoggerHelper;
@@ -13,14 +13,15 @@ import reactor.core.publisher.Mono;
 
 @Slf4j
 @Component
-public class BotClient {
+public class BotClientHttp implements BotClient {
     private final WebClient webClient;
 
     @Autowired
-    public BotClient(WebClient botWebClient) {
+    public BotClientHttp(WebClient botWebClient) {
         this.webClient = botWebClient;
     }
 
+    @Override
     public Mono<String> postUpdates(LinkUpdate linkUpdate) {
         try {
             String json = new ObjectMapper().writeValueAsString(linkUpdate);

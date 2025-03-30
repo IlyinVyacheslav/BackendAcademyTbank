@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.LinkResponse;
 import backend.academy.dto.ListLinksResponse;
+import backend.academy.scrapper.ScrapperConfig;
 import backend.academy.scrapper.dao.ChatDao;
 import backend.academy.scrapper.dao.FilterDao;
 import backend.academy.scrapper.dao.LinkDao;
@@ -23,11 +24,13 @@ import backend.academy.scrapper.model.dto.Link;
 import backend.academy.scrapper.service.ChatService;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,6 +46,9 @@ class ChatServiceTest {
 
     @Mock
     private FilterDao filterDao;
+
+    @Spy
+    private ScrapperConfig config = new ScrapperConfig("token", null, 10);
 
     @InjectMocks
     private ChatService chatService;
@@ -94,7 +100,7 @@ class ChatServiceTest {
     }
 
     @Test
-    void getAllLinksFromChat_ShouldReturnLinks_WhenChatExists() {
+    void getAllLinksFromChat_ShouldReturnLinks_AsBatchStream_WhenChatExists() {
         when(chatDao.existsChat(chatId)).thenReturn(true);
         when(linkDao.findLinksByChatId(chatId)).thenReturn(List.of(linkId));
         when(linkDao.getLinkUrlById(linkId)).thenReturn(linkUrl);
@@ -108,7 +114,7 @@ class ChatServiceTest {
     }
 
     @Test
-    void getAllLinksFromChat_ShouldThrowException_WhenChatNotFound() {
+    void getAllLinksAsBatchStreamFromChat_ShouldThrowException_WhenChatNotFound() {
         when(chatDao.existsChat(chatId)).thenReturn(false);
 
         assertThatThrownBy(() -> chatService.getAllLinksFromChat(chatId)).isInstanceOf(ChatNotFoundException.class);
@@ -195,13 +201,16 @@ class ChatServiceTest {
     }
 
     @Test
-    void getAllLinks() {
+    void getAllLinksAsBatchStream() {
+        int pageSize = config.pageSize();
         List<Link> expectedLinks = List.of(link);
-        when(linkDao.getAllLinks()).thenReturn(expectedLinks);
+        when(linkDao.getLinksPage(0, pageSize)).thenReturn(expectedLinks);
+        when(linkDao.getLinksPage(1, pageSize)).thenReturn(Collections.emptyList());
 
-        List<Link> links = chatService.getAllLinks();
+        List<Link> links =
+                chatService.getAllLinksAsBatchStream().flatMap(List::stream).collect(Collectors.toList());
 
-        assertThat(expectedLinks).isEqualTo(links);
+        assertThat(links).isEqualTo(expectedLinks);
     }
 
     @Test

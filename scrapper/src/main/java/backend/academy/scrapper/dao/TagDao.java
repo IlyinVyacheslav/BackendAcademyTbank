@@ -7,5 +7,7 @@ public interface TagDao {
 
     List<String> getAllTagsByChatIdAndLinkId(Long chatId, Long linkId);
 
+    boolean existsTagByChatIdAndLinkIdAntTag(Long chatId, Long linkId, String tag);
+
     void removeAllTagsFromChatByLinkId(Long chatId, Long linkId);
 }

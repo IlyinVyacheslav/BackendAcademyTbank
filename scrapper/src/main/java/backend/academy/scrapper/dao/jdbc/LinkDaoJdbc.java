@@ -46,6 +46,15 @@ public class LinkDaoJdbc implements LinkDao {
     }
 
     @Override
+    public Link getLinkById(Long linkId) {
+        String sql = "SELECT link_id, url, last_modified FROM links WHERE link_id = :linkId";
+        return jdbcTemplate.queryForObject(
+                sql,
+                Map.of("linkId", linkId),
+                (rs, rowNum) -> new Link(rs.getLong("link_id"), rs.getString("url"), rs.getTimestamp("last_modified")));
+    }
+
+    @Override
     public boolean removeLinkFromChatById(long chatId, long linkId) {
         String sql = "DELETE FROM chat_links WHERE chat_id = :chatId AND link_id = :linkId";
         return jdbcTemplate.update(sql, Map.of("chatId", chatId, "linkId", linkId)) > 0;
@@ -64,10 +73,11 @@ public class LinkDaoJdbc implements LinkDao {
     }
 
     @Override
-    public List<Link> getAllLinks() {
-        String sql = "SELECT link_id, url, last_modified FROM links";
+    public List<Link> getLinksPage(int pageNumber, int pageSize) {
+        String sql = "SELECT link_id, url, last_modified FROM links LIMIT :limit OFFSET :offset";
         return jdbcTemplate.query(
                 sql,
+                Map.of("limit", pageSize, "offset", pageNumber * pageSize),
                 (rs, rowNum) -> new Link(rs.getLong("link_id"), rs.getString("url"), rs.getTimestamp("last_modified")));
     }
 

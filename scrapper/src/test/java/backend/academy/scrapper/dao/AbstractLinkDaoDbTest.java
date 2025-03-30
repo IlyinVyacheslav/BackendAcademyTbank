@@ -94,7 +94,7 @@ public abstract class AbstractLinkDaoDbTest extends DbTest {
 
     @Test
     @DisplayName("Успешное получение всех ссылок из чата")
-    void testGetLinksByChatId() {
+    void testGetLinksPageByChatId() {
         addLinkAndChatToDb();
         List<String> links = List.of("https://www.yandex.ru", "https://www.mail.ru", "https://www.amazon.com");
         List<Long> expectedIndices =
@@ -109,14 +109,37 @@ public abstract class AbstractLinkDaoDbTest extends DbTest {
 
     @Test
     @DisplayName("Успешное получение всех ссылок")
-    void testGetAllLinks() {
+    void testGetLinksPage_returnsAllLinks() {
         List<String> links = List.of("aaa.com", "bbb.com", "ccc.com", "ddd.com", "eee.com");
 
         links.forEach(linkDao::addLink);
-        List<Link> allLinks = linkDao.getAllLinks();
+        List<Link> allLinks = linkDao.getLinksPage(0, 5);
 
         assertThat(allLinks).hasSize(5);
         assertThat(allLinks).extracting(Link::url).containsExactlyElementsOf(links);
+    }
+
+    @Test
+    @DisplayName("Успешное получание ссылок с пагинацией")
+    void testGetLinksPage_returnsLinksFromPage() {
+        List<String> links = List.of("aaa.com", "bbb.com", "ccc.com", "ddd.com", "eee.com");
+
+        links.forEach(linkDao::addLink);
+        List<Link> actualLinks = linkDao.getLinksPage(2, 2);
+
+        assertThat(actualLinks).hasSize(1);
+        assertThat(actualLinks).extracting(Link::url).containsExactlyElementsOf(links.subList(4, 5));
+    }
+
+    @Test
+    @DisplayName("Получение пустого списка ссылок с пагинацией")
+    void testGetLinksPage_returnsEmptyList() {
+        List<String> links = List.of("aaa.com", "bbb.com", "ccc.com", "ddd.com", "eee.com");
+
+        links.forEach(linkDao::addLink);
+        List<Link> actualLinks = linkDao.getLinksPage(2, 3);
+
+        assertThat(actualLinks).isEmpty();
     }
 
     @Test

@@ -8,4 +8,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TagRepo extends JpaRepository<TagEntity, Long> {
     List<TagEntity> findAllByChat_ChatIdAndLink_LinkId(Long chatId, Long linkId);
+
+    boolean existsByChat_ChatIdAndLink_LinkIdAndTag(Long chatId, Long linkId, String tag);
 }

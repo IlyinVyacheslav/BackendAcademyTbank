@@ -55,3 +55,19 @@ CREATE TABLE IF NOT EXISTS tags (
     FOREIGN KEY (chat_id) REFERENCES chats(chat_id) ON DELETE CASCADE,
     FOREIGN KEY (link_id) REFERENCES links(link_id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_chats_chat_id ON chats(chat_id);
+
+CREATE INDEX IF NOT EXISTS idx_links_link_id on links(link_id);
+CREATE INDEX IF NOT EXISTS idx_links_url on links(url);
+
+CREATE INDEX IF NOT EXISTS idx_chat_links_chat_id ON chat_links(chat_id);
+CREATE INDEX IF NOT EXISTS idx_chat_links_link_id ON chat_links(link_id);
+
+CREATE INDEX IF NOT EXISTS idx_tags_chat_id ON tags(chat_id);
+CREATE INDEX IF NOT EXISTS idx_tags_chat_id ON tags(link_id);
+CREATE INDEX IF NOT EXISTS idx_tags_tag ON tags(tag);
+
+CREATE INDEX IF NOT EXISTS idx_filters_chat_id ON filters(chat_id);
+CREATE INDEX IF NOT EXISTS idx_filters_chat_id ON filters(link_id);
+CREATE INDEX IF NOT EXISTS idx_filters_filter ON filters(filter);

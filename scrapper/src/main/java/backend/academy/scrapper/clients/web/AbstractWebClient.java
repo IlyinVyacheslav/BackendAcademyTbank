@@ -1,6 +1,7 @@
-package backend.academy.scrapper.clients;
+package backend.academy.scrapper.clients.web;
 
 import backend.academy.logger.LoggerHelper;
+import backend.academy.scrapper.clients.Notifications;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.net.URI;
 import java.sql.Timestamp;

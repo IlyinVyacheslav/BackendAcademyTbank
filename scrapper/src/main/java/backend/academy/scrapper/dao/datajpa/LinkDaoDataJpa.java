@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,6 +50,13 @@ public class LinkDaoDataJpa implements LinkDao {
         return linkRepo.findById(linkId).map(LinkEntity::url).orElse(null);
     }
 
+    @Override
+    public Link getLinkById(Long linkId) {
+        return linkRepo.findById(linkId)
+                .map(link -> new Link(link.linkId(), link.url(), link.lastModified()))
+                .orElse(null);
+    }
+
     @Transactional
     @Override
     public boolean removeLinkFromChatById(long chatId, long linkId) {
@@ -73,8 +82,11 @@ public class LinkDaoDataJpa implements LinkDao {
     }
 
     @Override
-    public List<Link> getAllLinks() {
-        return linkRepo.findAll().stream()
+    public List<Link> getLinksPage(int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        List<LinkEntity> linkEntities = linkRepo.findAll(pageable).getContent();
+
+        return linkEntities.stream()
                 .map(link -> new Link(link.linkId(), link.url(), link.lastModified()))
                 .toList();
     }

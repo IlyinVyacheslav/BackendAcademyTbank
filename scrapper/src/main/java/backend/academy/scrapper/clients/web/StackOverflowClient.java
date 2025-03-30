@@ -1,5 +1,6 @@
-package backend.academy.scrapper.clients;
+package backend.academy.scrapper.clients.web;
 
+import backend.academy.scrapper.clients.Notifications;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.sql.Timestamp;
 import lombok.extern.slf4j.Slf4j;

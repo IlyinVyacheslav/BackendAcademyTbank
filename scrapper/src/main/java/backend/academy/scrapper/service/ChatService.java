@@ -2,7 +2,10 @@ package backend.academy.scrapper.service;
 
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.LinkResponse;
+import backend.academy.dto.LinkUpdatedAt;
 import backend.academy.dto.ListLinksResponse;
+import backend.academy.dto.ListLinksUpdate;
+import backend.academy.scrapper.ScrapperConfig;
 import backend.academy.scrapper.dao.ChatDao;
 import backend.academy.scrapper.dao.FilterDao;
 import backend.academy.scrapper.dao.LinkDao;
@@ -14,6 +17,7 @@ import backend.academy.scrapper.model.dto.Link;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,13 +27,15 @@ public class ChatService {
     private final LinkDao linkDao;
     private final TagDao tagDao;
     private final FilterDao filterDao;
+    private final int pageSize;
 
     @Autowired
-    public ChatService(ChatDao chatDao, LinkDao linkDao, TagDao tagDao, FilterDao filterDao) {
+    public ChatService(ChatDao chatDao, LinkDao linkDao, TagDao tagDao, FilterDao filterDao, ScrapperConfig config) {
         this.chatDao = chatDao;
         this.linkDao = linkDao;
         this.tagDao = tagDao;
         this.filterDao = filterDao;
+        this.pageSize = config.pageSize();
     }
 
     public void registerChat(Long chatId) {
@@ -58,6 +64,30 @@ public class ChatService {
                 })
                 .collect(Collectors.toList());
         return new ListLinksResponse(linkResponses, linkResponses.size());
+    }
+
+    public List<String> getLinksUrlsByTagFromChat(Long chatId, String tag) {
+        return getLinksIdsByTagFromChat(chatId, tag).stream()
+                .map(linkDao::getLinkUrlById)
+                .toList();
+    }
+
+    public ListLinksUpdate getLinksUrlsByTagAndTimeFromChat(Long chatId, String tag, Timestamp fromTime) {
+        List<LinkUpdatedAt> linkUpdatedAts = getLinksIdsByTagFromChat(chatId, tag).stream()
+                .map(linkDao::getLinkById)
+                .filter(link -> link.lastModified().after(fromTime))
+                .map(link -> new LinkUpdatedAt(link.url(), link.lastModified()))
+                .toList();
+        return new ListLinksUpdate(linkUpdatedAts, linkUpdatedAts.size());
+    }
+
+    private List<Long> getLinksIdsByTagFromChat(Long chatId, String tag) {
+        if (!chatDao.existsChat(chatId)) {
+            throw new ChatNotFoundException(chatId);
+        }
+        return linkDao.findLinksByChatId(chatId).stream()
+                .filter(linkId -> tagDao.existsTagByChatIdAndLinkIdAntTag(chatId, linkId, tag))
+                .toList();
     }
 
     public void addLinkToChat(Long chatId, AddLinkRequest linkRequest) {
@@ -93,8 +123,10 @@ public class ChatService {
         filterDao.removeAllFiltersFromChatByLinkId(chatId, linkId);
     }
 
-    public List<Link> getAllLinks() {
-        return linkDao.getAllLinks();
+    public Stream<List<Link>> getAllLinksAsBatchStream() {
+        return Stream.iterate(0, pageNumber -> pageNumber + 1)
+                .map(pageNumber -> linkDao.getLinksPage(pageNumber, pageSize))
+                .takeWhile(batch -> !batch.isEmpty());
     }
 
     public void updateLinkLastModifiedAt(Long linkId, Timestamp modifiedAt) {

@@ -2,9 +2,12 @@ package backend.academy.scrapper.controller;
 
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.ListLinksResponse;
+import backend.academy.dto.ListLinksUpdate;
 import backend.academy.logger.LoggerHelper;
 import backend.academy.scrapper.service.ChatService;
 import jakarta.validation.Valid;
+import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
@@ -42,6 +46,19 @@ public class ScrapperGeneralChatController {
     @GetMapping("/links")
     public ResponseEntity<ListLinksResponse> getAllLinksFromChat(@RequestHeader("Tg-Chat-Id") Long id) {
         return ResponseEntity.ok(chatService.getAllLinksFromChat(id));
+    }
+
+    @GetMapping("/links/tagged")
+    public ResponseEntity<List<String>> getLinksByTagFromChat(
+            @RequestHeader("Tg-Chat-Id") Long id, @RequestParam("tag") String tag) {
+        return ResponseEntity.ok(chatService.getLinksUrlsByTagFromChat(id, tag));
+    }
+
+    @GetMapping("/links/updates")
+    public ResponseEntity<ListLinksUpdate> getLinksUpdatesFromChatByTagAndTime(
+            @RequestHeader("Tg-Chat-Id") Long id, @RequestParam("tag") String tag, @RequestBody Long fromTimestamp) {
+        Timestamp from = new Timestamp(fromTimestamp);
+        return ResponseEntity.ok(chatService.getLinksUrlsByTagAndTimeFromChat(id, tag, from));
     }
 
     @PostMapping("/links")

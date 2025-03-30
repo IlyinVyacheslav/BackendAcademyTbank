@@ -27,6 +27,13 @@ public class TagDaoJdbc implements TagDao {
     }
 
     @Override
+    public boolean existsTagByChatIdAndLinkIdAntTag(Long chatId, Long linkId, String tag) {
+        String sql = "SELECT EXISTS (SELECT * FROM tags WHERE chat_id = :chatId AND link_id = :linkId AND tag = :tag)";
+        return Boolean.TRUE.equals(jdbcTemplate.queryForObject(
+                sql, Map.of("chatId", chatId, "linkId", linkId, "tag", tag), Boolean.class));
+    }
+
+    @Override
     public void removeAllTagsFromChatByLinkId(Long chatId, Long linkId) {
         String sql = "DELETE FROM tags WHERE chat_id = :chatId AND link_id = :linkId";
         jdbcTemplate.update(sql, Map.of("chatId", chatId, "linkId", linkId));

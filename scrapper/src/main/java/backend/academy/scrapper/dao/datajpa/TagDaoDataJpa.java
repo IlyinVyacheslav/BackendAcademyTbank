@@ -40,6 +40,11 @@ public class TagDaoDataJpa implements TagDao {
     }
 
     @Override
+    public boolean existsTagByChatIdAndLinkIdAntTag(Long chatId, Long linkId, String tag) {
+        return tagRepo.existsByChat_ChatIdAndLink_LinkIdAndTag(chatId, linkId, tag);
+    }
+
+    @Override
     public void removeAllTagsFromChatByLinkId(Long chatId, Long linkId) {
         List<TagEntity> tags = tagRepo.findAllByChat_ChatIdAndLink_LinkId(chatId, linkId);
         tags.forEach(tagRepo::delete);

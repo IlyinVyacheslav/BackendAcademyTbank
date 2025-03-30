@@ -14,13 +14,15 @@ public interface LinkDao {
 
     String getLinkUrlById(Long linkId);
 
+    Link getLinkById(Long linkId);
+
     boolean removeLinkFromChatById(long chatId, long linkId);
 
     void updateLink(long linkId, Timestamp lastModified);
 
     List<Long> findLinksByChatId(Long chatId);
 
-    List<Link> getAllLinks();
+    List<Link> getLinksPage(int pageNumber, int pageSize);
 
     List<Long> getAllChatIdsByLinkId(Long linkId);
 }
