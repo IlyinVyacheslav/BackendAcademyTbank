@@ -27,8 +27,7 @@ public class ChatDaoDataJpa implements ChatDao {
 
     @Override
     public boolean removeChat(long chatId) {
-        if (!chatRepo.existsChatByChatId(chatId)) return false;
-        chatRepo.deleteById(chatId);
-        return true;
+        Long removedChats = chatRepo.deleteById(chatId);
+        return removedChats != null && removedChats != 0;
     }
 }

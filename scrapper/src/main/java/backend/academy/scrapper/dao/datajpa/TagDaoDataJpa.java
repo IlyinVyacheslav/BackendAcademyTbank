@@ -29,7 +29,7 @@ public class TagDaoDataJpa implements TagDao {
         chat.chatId(chatId);
         newTag.chat(chat);
 
-        tagRepo.saveAndFlush(newTag);
+        tagRepo.save(newTag);
     }
 
     @Override

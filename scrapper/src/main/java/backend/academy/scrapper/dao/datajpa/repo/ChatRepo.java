@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ChatRepo extends JpaRepository<ChatEntity, Long> {
     boolean existsChatByChatId(long chatId);
+
+    Long deleteById(long chatId);
 }

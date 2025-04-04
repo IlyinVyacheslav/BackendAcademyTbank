@@ -29,19 +29,16 @@ public class FilterDaoDataJpa implements FilterDao {
         chat.chatId(chatId);
         newFilter.chat(chat);
 
-        filterRepo.saveAndFlush(newFilter);
+        filterRepo.save(newFilter);
     }
 
     @Override
     public List<String> getFiltersByChatIdAndLinkId(Long chatId, Long linkId) {
-        return filterRepo.getAllByChat_ChatIdAndLink_LinkId(chatId, linkId).stream()
-                .map(FilterEntity::filter)
-                .toList();
+        return filterRepo.findFilterValuesByChatIdAndLinkId(chatId, linkId);
     }
 
     @Override
     public void removeAllFiltersFromChatByLinkId(Long chatId, Long linkId) {
-        List<FilterEntity> filters = filterRepo.getAllByChat_ChatIdAndLink_LinkId(chatId, linkId);
-        filters.forEach(filterRepo::delete);
+        filterRepo.deleteByChat_ChatIdAndLink_LinkId(chatId, linkId);
     }
 }
