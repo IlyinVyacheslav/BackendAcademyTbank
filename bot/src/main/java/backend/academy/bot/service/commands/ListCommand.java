@@ -2,11 +2,22 @@ package backend.academy.bot.service.commands;
 
 import backend.academy.bot.clients.ScrapperClient;
 import backend.academy.logger.LoggerHelper;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Component
 public class ListCommand implements Command {
+    private final RedisTemplate<Long, String> redisTemplate;
+
+    @Autowired
+    public ListCommand(RedisTemplate<Long, String> redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
+
     @Override
     public String getCommand() {
         return "/list";
@@ -19,7 +30,12 @@ public class ListCommand implements Command {
 
     @Override
     public String execute(ScrapperClient scrapperClient, Long chatId) {
-        return scrapperClient
+        String urlList = redisTemplate.opsForValue().get(chatId);
+        if (urlList != null) {
+            LoggerHelper.info("List was found in cache", Map.of("List", urlList));
+            return urlList;
+        }
+        Optional<String> byChatId = Optional.ofNullable(scrapperClient
                 .getAllLinks(chatId)
                 .map(links -> {
                     if (links == null || links.isEmpty()) {
@@ -32,6 +48,8 @@ public class ListCommand implements Command {
                     LoggerHelper.error("Error while getting links", error);
                     return Mono.error(error);
                 })
-                .block(timeout);
+                .block(timeout));
+        byChatId.ifPresent(l -> redisTemplate.opsForValue().set(chatId, l));
+        return byChatId.orElse(null);
     }
 }

@@ -30,3 +30,8 @@ app:
     access-token: ${SO_ACCESS_TOKEN}
   pageSize: 50
   access-type: SQL
+  message-transport: HTTP
+
+  kafka:
+    updates-topic: bot-updates
+    dlq-topic: bot-updates-dlq
