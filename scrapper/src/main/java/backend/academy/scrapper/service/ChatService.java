@@ -2,110 +2,141 @@ package backend.academy.scrapper.service;
 
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.dto.LinkResponse;
+import backend.academy.dto.LinkUpdatedAt;
 import backend.academy.dto.ListLinksResponse;
+import backend.academy.dto.ListLinksUpdate;
+import backend.academy.scrapper.ScrapperConfig;
+import backend.academy.scrapper.dao.ChatDao;
+import backend.academy.scrapper.dao.FilterDao;
+import backend.academy.scrapper.dao.LinkDao;
+import backend.academy.scrapper.dao.TagDao;
 import backend.academy.scrapper.exc.ChatAlreadyExistsException;
 import backend.academy.scrapper.exc.ChatNotFoundException;
-import backend.academy.scrapper.exc.LinkAlreadyExistsException;
 import backend.academy.scrapper.exc.LinkNotFoundException;
-import backend.academy.scrapper.model.Chat;
-import backend.academy.scrapper.model.Link;
-import backend.academy.scrapper.model.LinkInfo;
-import backend.academy.scrapper.repository.ChatRepository;
-import backend.academy.scrapper.repository.LinkRepository;
+import backend.academy.scrapper.model.dto.Link;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
 public class ChatService {
-    private final ChatRepository chatRepository;
-    private final LinkRepository linkRepository;
+    private final ChatDao chatDao;
+    private final LinkDao linkDao;
+    private final TagDao tagDao;
+    private final FilterDao filterDao;
+    private final int pageSize;
 
     @Autowired
-    public ChatService(ChatRepository chatRepository, LinkRepository linkRepository) {
-        this.chatRepository = chatRepository;
-        this.linkRepository = linkRepository;
+    public ChatService(ChatDao chatDao, LinkDao linkDao, TagDao tagDao, FilterDao filterDao, ScrapperConfig config) {
+        this.chatDao = chatDao;
+        this.linkDao = linkDao;
+        this.tagDao = tagDao;
+        this.filterDao = filterDao;
+        this.pageSize = config.pageSize();
     }
 
     public void registerChat(Long chatId) {
-        if (chatRepository.getChat(chatId) != null) {
+        if (chatDao.existsChat(chatId)) {
             throw new ChatAlreadyExistsException(chatId);
         }
-        chatRepository.addChat(new Chat(chatId));
+        chatDao.addChat(chatId);
     }
 
     public void deleteChat(Long chatId) {
-        if (!chatRepository.removeChat(chatId)) {
+        if (!chatDao.removeChat(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
     }
 
     public ListLinksResponse getAllLinksFromChat(Long chatId) {
-        Chat chat = chatRepository.getChat(chatId);
-        if (chat == null) {
+        if (!chatDao.existsChat(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
-        List<LinkResponse> linkResponses = chat.linksToFollow().stream()
-                .map(linkInfo -> {
-                    Link link = linkRepository.getLink(linkInfo.linkId());
-                    return new LinkResponse(link.id(), link.url(), linkInfo.tags(), linkInfo.filters());
+        List<Long> linkIds = linkDao.findLinksByChatId(chatId);
+        List<LinkResponse> linkResponses = linkIds.stream()
+                .map(linkId -> {
+                    List<String> tags = tagDao.getAllTagsByChatIdAndLinkId(chatId, linkId);
+                    List<String> filters = filterDao.getFiltersByChatIdAndLinkId(chatId, linkId);
+                    return new LinkResponse(linkId, linkDao.getLinkUrlById(linkId), tags, filters);
                 })
                 .collect(Collectors.toList());
         return new ListLinksResponse(linkResponses, linkResponses.size());
     }
 
-    public void addLinkToChat(Long chatId, AddLinkRequest addLinkRequest) {
-        String url = addLinkRequest.link();
-        Link link = linkRepository.getLinkByUrl(url);
-        if (link == null) {
-            link = linkRepository.addLink(url);
-        }
+    public List<String> getLinksUrlsByTagFromChat(Long chatId, String tag) {
+        return getLinksIdsByTagFromChat(chatId, tag).stream()
+                .map(linkDao::getLinkUrlById)
+                .toList();
+    }
 
-        Chat chat = chatRepository.getChat(chatId);
-        if (chat == null) {
+    public ListLinksUpdate getLinksUrlsByTagAndTimeFromChat(Long chatId, String tag, Timestamp fromTime) {
+        List<LinkUpdatedAt> linkUpdatedAts = getLinksIdsByTagFromChat(chatId, tag).stream()
+                .map(linkDao::getLinkById)
+                .filter(link -> link.lastModified().after(fromTime))
+                .map(link -> new LinkUpdatedAt(link.url(), link.lastModified()))
+                .toList();
+        return new ListLinksUpdate(linkUpdatedAts, linkUpdatedAts.size());
+    }
+
+    private List<Long> getLinksIdsByTagFromChat(Long chatId, String tag) {
+        if (!chatDao.existsChat(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
+        return linkDao.findLinksByChatId(chatId).stream()
+                .filter(linkId -> tagDao.existsTagByChatIdAndLinkIdAntTag(chatId, linkId, tag))
+                .toList();
+    }
 
-        if (chat.containsUrl(link.id())) {
-            throw new LinkAlreadyExistsException(chatId, url);
+    public void addLinkToChat(Long chatId, AddLinkRequest linkRequest) {
+        if (!chatDao.existsChat(chatId)) {
+            throw new ChatNotFoundException(chatId);
         }
+        Long linkId = linkDao.getLinkIdByUrl(linkRequest.link());
+        if (linkId == null) {
+            linkId = linkDao.addLink(linkRequest.link());
+        }
+        linkDao.addLinkToChat(chatId, linkId);
 
-        chat.addLink(new LinkInfo(link.id(), addLinkRequest.tags(), addLinkRequest.filters()));
-
-        chatRepository.updateChat(chatId, chat);
+        Long finalLinkId = linkId;
+        linkRequest.tags().forEach(tag -> tagDao.addTag(chatId, finalLinkId, tag));
+        linkRequest.filters().forEach(filter -> filterDao.addFilter(chatId, finalLinkId, filter));
     }
 
     public void deleteLinkFromChat(Long chatId, String url) {
-        if (chatRepository.getChat(chatId) == null) {
+        if (!chatDao.existsChat(chatId)) {
             throw new ChatNotFoundException(chatId);
         }
-        Link link = linkRepository.getLinkByUrl(url);
-        if (link == null) {
+
+        Long linkId = linkDao.getLinkIdByUrl(url);
+        if (linkId == null) {
             throw new LinkNotFoundException(url);
         }
-        if (!chatRepository.removeLinkFromChatById(chatId, link.id())) {
+
+        if (!linkDao.removeLinkFromChatById(chatId, linkId)) {
             throw new LinkNotFoundException(chatId, url);
         }
+
+        tagDao.removeAllTagsFromChatByLinkId(chatId, linkId);
+        filterDao.removeAllFiltersFromChatByLinkId(chatId, linkId);
     }
 
-    public List<Link> getAllLinks() {
-        return linkRepository.getAllLinks();
+    public Stream<List<Link>> getAllLinksAsBatchStream() {
+        return Stream.iterate(0, pageNumber -> pageNumber + 1)
+                .map(pageNumber -> linkDao.getLinksPage(pageNumber, pageSize))
+                .takeWhile(batch -> !batch.isEmpty());
     }
 
-    public void updateLinkLastModifiedAt(Long id, String modifiedAt) {
-        Link oldLink = linkRepository.getLink(id);
-        if (oldLink == null) {
-            throw new LinkNotFoundException(String.format("There is no link with id %d", id));
+    public void updateLinkLastModifiedAt(Long linkId, Timestamp modifiedAt) {
+        if (linkDao.getLinkUrlById(linkId) == null) {
+            throw new LinkNotFoundException(String.format("There is no link with linkId %d", linkId));
         }
-        linkRepository.updateLink(new Link(oldLink.id(), oldLink.url(), modifiedAt));
+        linkDao.updateLink(linkId, modifiedAt);
     }
 
     public List<Long> getAllChatIdsByLinkId(Long linkId) {
-        return chatRepository
-                .getAllChatsAsStream()
-                .filter(chat -> chat.containsUrl(linkId))
-                .map(Chat::chatId)
-                .collect(Collectors.toList());
+        return linkDao.getAllChatIdsByLinkId(linkId);
     }
 }

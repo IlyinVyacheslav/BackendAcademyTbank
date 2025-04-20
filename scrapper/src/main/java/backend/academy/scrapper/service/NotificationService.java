@@ -2,13 +2,15 @@ package backend.academy.scrapper.service;
 
 import backend.academy.dto.LinkUpdate;
 import backend.academy.logger.LoggerHelper;
-import backend.academy.scrapper.clients.BotClient;
-import backend.academy.scrapper.clients.GitHubClient;
 import backend.academy.scrapper.clients.Notifications;
-import backend.academy.scrapper.clients.StackOverflowClient;
-import backend.academy.scrapper.model.Link;
+import backend.academy.scrapper.clients.bot.BotClient;
+import backend.academy.scrapper.clients.web.GitHubClient;
+import backend.academy.scrapper.clients.web.StackOverflowClient;
+import backend.academy.scrapper.model.dto.Link;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ForkJoinPool;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -35,26 +37,36 @@ public class NotificationService {
     @Scheduled(fixedRate = 120_000)
     public void checkNotifications() {
         LoggerHelper.info("Checking notifications");
-        chatService.getAllLinks().forEach(link -> {
-            String lastModified = link.lastModified();
-            if (link.url().startsWith("github")) {
-                gitHubClient
-                        .getNewNotifications(link.url(), lastModified)
-                        .doOnError(error -> LoggerHelper.error("Error while polling github", error))
-                        .doOnSuccess(resp -> handleResponse(link, resp, lastModified))
-                        .subscribe();
-            } else if (link.url().startsWith("stackoverflow")) {
-                stackOverflowClient
-                        .getNewNotifications(link.url(), lastModified)
-                        .doOnError(error -> LoggerHelper.error("Error while polling stackoverflow", error))
-                        .doOnSuccess(resp -> handleResponse(link, resp, lastModified))
-                        .subscribe();
+        chatService.getAllLinksAsBatchStream().forEach(linkEntityList -> {
+            try (ForkJoinPool pool = new ForkJoinPool(4)) {
+                pool.submit(() -> linkEntityList.parallelStream().forEach(this::processLink))
+                        .get();
+            } catch (Exception e) {
+                LoggerHelper.error("Ошибка в параллелой обработке ссылок", e);
             }
         });
     }
 
-    private void handleResponse(Link link, Notifications resp, String lastModified) {
-        String updatedAt = resp.updatedAt();
+    private void processLink(Link link) {
+        LoggerHelper.info("Polling notifications for link" + link.url());
+        Timestamp lastModified = link.lastModified();
+        if (link.url().startsWith("github")) {
+            gitHubClient
+                    .getNewNotifications(link.url(), lastModified)
+                    .doOnError(error -> LoggerHelper.error("Error while polling github", error))
+                    .doOnSuccess(resp -> handleResponse(link, resp, lastModified))
+                    .subscribe();
+        } else if (link.url().startsWith("stackoverflow")) {
+            stackOverflowClient
+                    .getNewNotifications(link.url(), lastModified)
+                    .doOnError(error -> LoggerHelper.error("Error while polling stackoverflow", error))
+                    .doOnSuccess(resp -> handleResponse(link, resp, lastModified))
+                    .subscribe();
+        }
+    }
+
+    private void handleResponse(Link link, Notifications resp, Timestamp lastModified) {
+        Timestamp updatedAt = resp.updatedAt();
         if (updatedAt == null || updatedAt.equals(lastModified)) {
             LoggerHelper.info("No updates happened", Map.of("response", resp));
         } else {

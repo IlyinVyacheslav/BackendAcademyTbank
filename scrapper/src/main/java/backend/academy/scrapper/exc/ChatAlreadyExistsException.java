@@ -6,6 +6,6 @@ public class ChatAlreadyExistsException extends BaseChatRepositoryException {
     }
 
     public ChatAlreadyExistsException(Long chatId) {
-        super(String.format("Chat with id %d already exists", chatId));
+        super(String.format("Chat with linkId %d already exists", chatId));
     }
 }

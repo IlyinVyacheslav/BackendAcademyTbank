@@ -150,8 +150,8 @@ public class ScrapperGeneralChatControllerTest {
                 .andExpect(jsonPath("$.description").value("Ошибка в репозитории"))
                 .andExpect(jsonPath("$.code").value("404"))
                 .andExpect(jsonPath("$.exceptionName").value("ChatNotFoundException"))
-                .andExpect(
-                        jsonPath("$.exceptionMessage").value(String.format("Chat with id: %d does not exist", chatId)))
+                .andExpect(jsonPath("$.exceptionMessage")
+                        .value(String.format("Chat with linkId: %d does not exist", chatId)))
                 .andExpect(jsonPath("$.stackTrace").isArray())
                 .andExpect(jsonPath("$.stackTrace.length()").value(0));
     }

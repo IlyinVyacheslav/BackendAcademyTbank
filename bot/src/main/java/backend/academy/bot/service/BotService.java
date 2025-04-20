@@ -3,6 +3,7 @@ package backend.academy.bot.service;
 import backend.academy.bot.clients.ScrapperClient;
 import backend.academy.bot.exceptions.IllegalCommandException;
 import backend.academy.bot.exceptions.InvalidChatIdException;
+import backend.academy.bot.exceptions.InvalidTagAndTimeFormatException;
 import backend.academy.bot.service.commands.Command;
 import backend.academy.dto.AddLinkRequest;
 import backend.academy.logger.LoggerHelper;
@@ -14,6 +15,7 @@ import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.model.request.ForceReply;
 import com.pengrad.telegrambot.request.SendMessage;
 import com.pengrad.telegrambot.request.SetMyCommands;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -95,6 +97,9 @@ public class BotService implements BotMessages {
                     handleUnknownCommand(chatId);
                 } catch (InvalidChatIdException e) {
                     LoggerHelper.error("❌ Чат с неправильным ID", Map.of("chatId", chatId), e);
+                } catch (InvalidTagAndTimeFormatException e) {
+                    LoggerHelper.error("❌ Неверный формат тега и времени", Map.of("chatId", chatId), e);
+                    sendMessage(chatId, "Неверный формат тега или времени");
                 }
             }
         }
@@ -112,14 +117,23 @@ public class BotService implements BotMessages {
             sendMessage(chatId, SEND_TAGS_MESSAGE, true);
         } else if (replyText.contains(SEND_TAGS_MESSAGE)) {
             AddLinkRequest link = userLinks.get(chatId);
+            StringBuilder reply = new StringBuilder();
             if (link != null) {
-                link.tags().addAll(List.of(receivedText.split("\\s")));
-                sendMessage(chatId, SEND_FILTERS_MESSAGE, true);
+                if (receivedText.equals("-")) {
+                    reply.append(NO_TAGS_SENT).append(" ");
+                } else {
+                    link.tags().addAll(List.of(receivedText.split("\\s")));
+                }
+                sendMessage(chatId, reply.append(SEND_FILTERS_MESSAGE).toString(), true);
             }
         } else if (replyText.contains(SEND_FILTERS_MESSAGE)) {
             AddLinkRequest link = userLinks.get(chatId);
             if (link != null) {
-                link.filters().addAll(List.of(receivedText.split("\\s")));
+                if (receivedText.equals("-")) {
+                    sendMessage(chatId, NO_FILTERS_SENT);
+                } else {
+                    link.filters().addAll(List.of(receivedText.split("\\s")));
+                }
                 scrapperClient
                         .addLink(getChatIdToLong(chatId), link)
                         .subscribe(response -> sendMessage(chatId, response));
@@ -129,6 +143,16 @@ public class BotService implements BotMessages {
             scrapperClient
                     .removeLink(getChatIdToLong(chatId), receivedText)
                     .subscribe(response -> sendMessage(chatId, response));
+        } else if (replyText.contains(SEND_TAG_MESSAGE)) {
+            scrapperClient
+                    .getLinksByTag(getChatIdToLong(chatId), receivedText)
+                    .subscribe(response -> sendMessage(chatId, response.toString()));
+        } else if (replyText.contains(SEND_TAG_AND_TIME_MESSAGE)) {
+            ParseUtils.TagAndTime tagAndTime = ParseUtils.parseTagAndTime(receivedText);
+            scrapperClient
+                    .getLinksByTagAndTime(
+                            getChatIdToLong(chatId), tagAndTime.tag(), Timestamp.valueOf(tagAndTime.time()))
+                    .subscribe(response -> sendMessage(chatId, response.toString()));
         }
     }
 

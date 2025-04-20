@@ -5,6 +5,7 @@ import backend.academy.dto.ApiErrorResponse;
 import backend.academy.logger.LoggerHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.sql.Timestamp;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
@@ -68,6 +69,35 @@ public class ScrapperClient {
                 .get()
                 .uri("/links")
                 .header("Tg-Chat-Id", chatId.toString())
+                .retrieve()
+                .bodyToFlux(String.class)
+                .onErrorResume(
+                        WebClientResponseException.class,
+                        ex -> Mono.just(parseErrorResponse(ex.getResponseBodyAsString())))
+                .collectList();
+    }
+
+    public Mono<List<String>> getLinksByTag(Long chatId, String tag) {
+        return webClient
+                .method(HttpMethod.GET)
+                .uri(uriBuilder ->
+                        uriBuilder.path("/links/tagged").queryParam("tag", tag).build())
+                .header("Tg-Chat-Id", chatId.toString())
+                .retrieve()
+                .bodyToFlux(String.class)
+                .onErrorResume(
+                        WebClientResponseException.class,
+                        ex -> Mono.just(parseErrorResponse(ex.getResponseBodyAsString())))
+                .collectList();
+    }
+
+    public Mono<List<String>> getLinksByTagAndTime(Long chatId, String tag, Timestamp time) {
+        return webClient
+                .method(HttpMethod.GET)
+                .uri(uriBuilder ->
+                        uriBuilder.path("/links/updates").queryParam("tag", tag).build())
+                .header("Tg-Chat-Id", chatId.toString())
+                .bodyValue(time.getTime())
                 .retrieve()
                 .bodyToFlux(String.class)
                 .onErrorResume(
