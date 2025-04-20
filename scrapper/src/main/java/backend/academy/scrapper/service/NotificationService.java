@@ -11,28 +11,17 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
     private final ChatService chatService;
     private final GitHubClient gitHubClient;
     private final StackOverflowClient stackOverflowClient;
     private final BotClient botClient;
-
-    @Autowired
-    public NotificationService(
-            ChatService chatService,
-            GitHubClient gitHubClient,
-            StackOverflowClient stackOverflowClient,
-            BotClient botClient) {
-        this.chatService = chatService;
-        this.gitHubClient = gitHubClient;
-        this.stackOverflowClient = stackOverflowClient;
-        this.botClient = botClient;
-    }
 
     @Scheduled(fixedRate = 120_000)
     public void checkNotifications() {

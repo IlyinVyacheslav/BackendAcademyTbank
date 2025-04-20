@@ -36,8 +36,8 @@ public class BotAppConfiguration {
     }
 
     @Bean
-    public RedisTemplate<Long, String> redisTemplate() {
-        RedisTemplate<Long, String> template = new RedisTemplate<>();
+    public RedisTemplate<String, String> redisTemplate() {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.setConnectionFactory(lettuceConnectionFactory());

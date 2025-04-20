@@ -12,6 +12,11 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer.properties:
+      acks: 1
+      schema.registry.url: http://localhost:8083
   profiles:
     active: ${app.access-type}
 
@@ -30,8 +35,9 @@ app:
     access-token: ${SO_ACCESS_TOKEN}
   pageSize: 50
   access-type: SQL
-  message-transport: HTTP
+  message-transport: Kafka
 
   kafka:
     updates-topic: bot-updates
     dlq-topic: bot-updates-dlq
+    partitions: 1

@@ -11,8 +11,9 @@ public record ScrapperConfig(
         StackOverflowCredentials stackOverflow,
         int pageSize,
         String accessType,
-        Kafka kafka
-) {
+        String messageTransport,
+        Kafka kafka) {
     public record StackOverflowCredentials(@NotEmpty String key, @NotEmpty String accessToken) {}
-    public record Kafka(@NotEmpty String updatesTopic, @NotEmpty String dlqTopic) {}
+
+    public record Kafka(String updatesTopic, String dlqTopic, int partitions) {}
 }

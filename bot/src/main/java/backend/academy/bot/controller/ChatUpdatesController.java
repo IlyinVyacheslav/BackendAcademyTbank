@@ -9,18 +9,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class ChatUpdatesController {
-    private final BotService botService;
-
+public class ChatUpdatesController extends BaseChatUpdatesController {
     @Autowired
     public ChatUpdatesController(BotService botService) {
-        this.botService = botService;
+        super(botService);
     }
 
     @PostMapping("/updates")
     public String postUpdates(@Valid @RequestBody LinkUpdate linkUpdate) {
-        String message = String.format("\"%s\" url was updated: %s", linkUpdate.url(), linkUpdate.description());
-        linkUpdate.tgChatIds().forEach(id -> botService.sendMessage(String.valueOf(id), message));
+        processLinkUpdate(linkUpdate);
         return "Обновление обработано";
     }
 }

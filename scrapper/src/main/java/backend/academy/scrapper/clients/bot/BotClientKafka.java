@@ -7,13 +7,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
 @RequiredArgsConstructor
 public class BotClientKafka implements BotClient {
-    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final KafkaTemplate<Long, String> jsonKafkaTemplate;
     private final ObjectMapper objectMapper;
     private final ScrapperConfig config;
 
@@ -21,11 +19,11 @@ public class BotClientKafka implements BotClient {
     public Mono<String> postUpdates(LinkUpdate linkUpdate) {
         try {
             String json = objectMapper.writeValueAsString(linkUpdate);
-            kafkaTemplate.send(config.kafka().updatesTopic(), json);
+            jsonKafkaTemplate.send(config.kafka().updatesTopic(), linkUpdate.id(), json);
             return Mono.just("Sent to kafka");
         } catch (JsonProcessingException e) {
             LoggerHelper.error("Kafka send error: unable to serialize update", e);
-            kafkaTemplate.send(config.kafka().dlqTopic(), e.getMessage());
+            jsonKafkaTemplate.send(config.kafka().dlqTopic(), linkUpdate.id(), e.getMessage());
             return Mono.error(e);
         }
     }

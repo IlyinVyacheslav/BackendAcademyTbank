@@ -4,20 +4,14 @@ import backend.academy.dto.LinkUpdate;
 import backend.academy.logger.LoggerHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
-@Component
+@RequiredArgsConstructor
 public class BotClientHttp implements BotClient {
     private final WebClient webClient;
-
-    @Autowired
-    public BotClientHttp(WebClient botWebClient) {
-        this.webClient = botWebClient;
-    }
 
     @Override
     public Mono<String> postUpdates(LinkUpdate linkUpdate) {

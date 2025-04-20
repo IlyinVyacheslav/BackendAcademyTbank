@@ -1,9 +1,15 @@
 package backend.academy.scrapper.config;
 
 import backend.academy.scrapper.ScrapperConfig;
+import backend.academy.scrapper.clients.bot.BotClient;
+import backend.academy.scrapper.clients.bot.BotClientHttp;
+import backend.academy.scrapper.clients.bot.BotClientKafka;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
@@ -27,5 +33,17 @@ public class ScrapperAppConfiguration {
     @Bean
     public WebClient stackOverflowWebClient(ScrapperConfig scrapperConfig) {
         return WebClient.builder().baseUrl("https://api.stackexchange.com").build();
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "app.message-transport", havingValue = "Kafka")
+    public BotClient botClientKafka(KafkaTemplate<Long, String> kafkaTemplate, ScrapperConfig scrapperConfig) {
+        return new BotClientKafka(kafkaTemplate, new ObjectMapper(), scrapperConfig);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = "app.message-transport", havingValue = "HTTP")
+    public BotClient botClientHttp(WebClient botWebClient) {
+        return new BotClientHttp(botWebClient);
     }
 }

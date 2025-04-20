@@ -1,18 +1,14 @@
 package backend.academy.bot.service.commands;
 
 import backend.academy.bot.clients.ScrapperClient;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class UntrackCommand implements Command {
-    private final RedisTemplate<Long, String> redisTemplate;
-
-    @Autowired
-    public UntrackCommand(RedisTemplate<Long, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     public boolean shouldBeReplied() {
@@ -31,7 +27,7 @@ public class UntrackCommand implements Command {
 
     @Override
     public String execute(ScrapperClient scrapperClient, Long chatId) {
-        redisTemplate.delete(chatId);
+        redisTemplate.delete(String.valueOf(chatId));
         return UNTRACK_LINK_MESSAGE;
     }
 }

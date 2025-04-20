@@ -4,19 +4,15 @@ import backend.academy.bot.clients.ScrapperClient;
 import backend.academy.logger.LoggerHelper;
 import java.util.Map;
 import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
 @Component
+@RequiredArgsConstructor
 public class ListCommand implements Command {
-    private final RedisTemplate<Long, String> redisTemplate;
-
-    @Autowired
-    public ListCommand(RedisTemplate<Long, String> redisTemplate) {
-        this.redisTemplate = redisTemplate;
-    }
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Override
     public String getCommand() {
@@ -30,7 +26,7 @@ public class ListCommand implements Command {
 
     @Override
     public String execute(ScrapperClient scrapperClient, Long chatId) {
-        String urlList = redisTemplate.opsForValue().get(chatId);
+        String urlList = redisTemplate.opsForValue().get(String.valueOf(chatId));
         if (urlList != null) {
             LoggerHelper.info("List was found in cache", Map.of("List", urlList));
             return urlList;
@@ -49,7 +45,7 @@ public class ListCommand implements Command {
                     return Mono.error(error);
                 })
                 .block(timeout));
-        byChatId.ifPresent(l -> redisTemplate.opsForValue().set(chatId, l));
+        byChatId.ifPresent(l -> redisTemplate.opsForValue().set(String.valueOf(chatId), l));
         return byChatId.orElse(null);
     }
 }

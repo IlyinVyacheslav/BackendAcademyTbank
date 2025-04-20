@@ -20,9 +20,10 @@ import org.springframework.data.redis.core.ValueOperations;
 import reactor.core.publisher.Mono;
 
 public class CacheTest {
-    private final Long chatId = 1234L;
-    private RedisTemplate<Long, String> redisTemplate;
-    private ValueOperations<Long, String> valueOperations;
+    private final String chatId = "123";
+    private final Long chatIdLong = 123L;
+    private RedisTemplate<String, String> redisTemplate;
+    private ValueOperations<String, String> valueOperations;
     private ScrapperClient scrapperClient;
     private ListCommand listCommand;
     private TrackCommand trackCommand;
@@ -44,10 +45,10 @@ public class CacheTest {
     @Test
     void testCacheStoresData() {
         when(valueOperations.get(chatId)).thenReturn(null);
-        when(scrapperClient.getAllLinks(chatId)).thenReturn(Mono.just(List.of("http://example.com")));
+        when(scrapperClient.getAllLinks(chatIdLong)).thenReturn(Mono.just(List.of("http://example.com")));
         String expectedResult = "[http://example.com]";
 
-        String result = listCommand.execute(scrapperClient, chatId);
+        String result = listCommand.execute(scrapperClient, chatIdLong);
 
         verify(valueOperations, times(1)).get(chatId);
         verify(valueOperations, times(1)).set(chatId, expectedResult);
@@ -59,7 +60,7 @@ public class CacheTest {
         String testResult = "[http://example.com]";
         when(valueOperations.get(chatId)).thenReturn(testResult);
 
-        String result = listCommand.execute(scrapperClient, chatId);
+        String result = listCommand.execute(scrapperClient, chatIdLong);
 
         verify(scrapperClient, never()).getAllLinks(any());
         verify(valueOperations, never()).set(chatId, testResult);
@@ -68,14 +69,14 @@ public class CacheTest {
 
     @Test
     void testTrackCommandCacheInvalidation() {
-        trackCommand.execute(scrapperClient, chatId);
+        trackCommand.execute(scrapperClient, chatIdLong);
 
         verify(redisTemplate, times(1)).delete(chatId);
     }
 
     @Test
     void testUntrackCommandCacheInvalidation() {
-        untrackCommand.execute(scrapperClient, chatId);
+        untrackCommand.execute(scrapperClient, chatIdLong);
 
         verify(redisTemplate, times(1)).delete(chatId);
     }
