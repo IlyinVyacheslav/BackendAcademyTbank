@@ -16,7 +16,6 @@ spring:
     bootstrap-servers: localhost:9092
     producer.properties:
       acks: 1
-      schema.registry.url: http://localhost:8083
   profiles:
     active: ${app.access-type}
 
