@@ -22,11 +22,7 @@ public class ChatUpdatesConsumer extends BaseChatUpdatesController {
     @KafkaListener(containerFactory = "consumerFactory", topics = "${app.kafka.updates-topic}")
     public void consume(ConsumerRecord<Long, LinkUpdate> record, Acknowledgment acknowledgement) {
         LoggerHelper.info(String.format(
-                """
-                Получено следующее сообщение из топика %s:
-                key: %s,
-                value: %s
-                """,
+                "Получено следующее сообщение из топика %s:%n key: %s, value: %s",
                 record.topic(), record.key(), record.value()));
         acknowledgement.acknowledge();
         processLinkUpdate(record.value());
