@@ -139,4 +139,11 @@ public class ChatService {
     public List<Long> getAllChatIdsByLinkId(Long linkId) {
         return linkDao.getAllChatIdsByLinkId(linkId);
     }
+
+    public List<String> getFiltersByChatIdAndLinkId(Long chatId, Long linkId) {
+        if (!chatDao.existsChat(chatId)) {
+            throw new ChatNotFoundException(chatId);
+        }
+        return filterDao.getFiltersByChatIdAndLinkId(chatId, linkId);
+    }
 }

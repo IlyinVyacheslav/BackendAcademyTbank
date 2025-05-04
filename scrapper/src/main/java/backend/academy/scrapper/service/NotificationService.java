@@ -62,8 +62,17 @@ public class NotificationService {
             try {
                 chatService.updateLinkLastModifiedAt(link.id(), updatedAt);
                 List<Long> chatsWithLinkId = chatService.getAllChatIdsByLinkId(link.id());
+                List<Long> filteredChats = chatsWithLinkId.stream()
+                        .filter(chatId -> resp.user()
+                                .map(user -> {
+                                    List<String> filters = chatService.getFiltersByChatIdAndLinkId(chatId, link.id());
+                                    return !filters.contains(user);
+                                })
+                                .orElse(true))
+                        .toList();
+
                 botClient
-                        .postUpdates(new LinkUpdate(link.id(), link.url(), resp.message(), chatsWithLinkId))
+                        .postUpdates(new LinkUpdate(link.id(), link.url(), resp.message(), filteredChats))
                         .doOnError(error -> LoggerHelper.error("Error while sending update to tgBot", error))
                         .doOnSuccess(res -> LoggerHelper.info("Update sent successfully", Map.of("response", res)))
                         .subscribe();

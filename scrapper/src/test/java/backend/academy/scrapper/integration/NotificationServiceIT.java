@@ -1,10 +1,8 @@
 package backend.academy.scrapper.integration;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -23,18 +21,21 @@ import backend.academy.scrapper.service.NotificationService;
 import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
+@TestPropertySource(properties = "app.message-transport=HTTP")
 @SpringBootTest
 @AutoConfigureWebTestClient
 public class NotificationServiceIT {
@@ -73,13 +74,13 @@ public class NotificationServiceIT {
         Link nonExistingtLink = new Link(3L, "github.com/test/repo", null);
         when(chatService.getAllLinksAsBatchStream()).thenReturn(Stream.of(List.of(nonExistingtLink)));
         when(gitHubClient.getNewNotifications(nonExistingtLink.url(), nonExistingtLink.lastModified()))
-                .thenReturn(Mono.just(new Notifications("New commit", Timestamp.valueOf("2024-02-22T10:00:00Z"))));
+                .thenReturn(Mono.just(new Notifications("New commit", Timestamp.valueOf("2024-02-22 10:00:00"))));
 
         assertThatNoException().isThrownBy(() -> notificationService.checkNotifications());
 
         verify(botClientHttp, never()).postUpdates(any(LinkUpdate.class));
         assertThatThrownBy(() -> chatService.updateLinkLastModifiedAt(
-                        nonExistingtLink.id(), Timestamp.valueOf("2024-02-22T10:00:00Z")))
+                        nonExistingtLink.id(), Timestamp.valueOf("2024-02-22 10:00:00")))
                 .isInstanceOf(LinkNotFoundException.class);
     }
 
@@ -95,29 +96,58 @@ public class NotificationServiceIT {
 
     @Test
     void checkNotifications_ShouldNotSendUpdate_WhenLastModifiedNotChanged() {
-        Link previousLink = new Link(4L, "github.com/user1/repo1", Timestamp.valueOf("2024-02-22T10:00:00Z"));
+        Link previousLink = new Link(4L, "github.com/user1/repo1", Timestamp.valueOf("2024-02-22 10:00:00"));
         when(chatService.getAllLinksAsBatchStream()).thenReturn(Stream.of(List.of(previousLink)));
         when(gitHubClient.getNewNotifications(previousLink.url(), previousLink.lastModified()))
                 .thenReturn(Mono.just(new Notifications("New commit", previousLink.lastModified())));
 
         notificationService.checkNotifications();
 
-        verify(chatService, never()).updateLinkLastModifiedAt(eq(previousLink.id()), Timestamp.valueOf(anyString()));
+        verify(chatService, never()).updateLinkLastModifiedAt(eq(previousLink.id()), any(Timestamp.class));
         verify(botClientHttp, never()).postUpdates(any(LinkUpdate.class));
+    }
+
+    @Test
+    void checkNotifications_ShouldNotSendUpdate_WhenUserIsInFilters() {
+        Link link = new Link(1L, "github.com/user1/repo1", null);
+        when(chatService.getAllLinksAsBatchStream()).thenReturn(Stream.of(List.of(link)));
+        when(gitHubClient.getNewNotifications(link.url(), null))
+                .thenReturn(Mono.just(new Notifications("New commit", link.lastModified(), Optional.of("slava_itmo"))));
+        when(chatService.getFiltersByChatIdAndLinkId(1L, 1L)).thenReturn(List.of("slava_itmo", "vadim_itmo"));
+
+        notificationService.checkNotifications();
+
+        verify(botClientHttp, never()).postUpdates(any(LinkUpdate.class));
+    }
+
+    @Test
+    void checkNotifications_ShouldSendUpdate_WhenUserIsNotInFilters() {
+        Link link = new Link(1L, "github.com/user1/repo1", Timestamp.valueOf("2024-02-22 10:00:00"));
+        when(chatService.getAllLinksAsBatchStream()).thenReturn(Stream.of(List.of(link)));
+        when(gitHubClient.getNewNotifications(link.url(), Timestamp.valueOf("2024-02-22 10:00:00")))
+                .thenReturn(Mono.just(new Notifications("New commit", link.lastModified(), Optional.of("slava_itmo"))));
+        when(chatService.getFiltersByChatIdAndLinkId(1L, 1L)).thenReturn(List.of("tyoma_itmo", "vadim_itmo"));
+        when(botClientHttp.postUpdates(any())).thenReturn(Mono.just("ok"));
+
+        notificationService.checkNotifications();
+
+        StepVerifier.create(botClientHttp.postUpdates(new LinkUpdate(link.id(), link.url(), "New commit", List.of(1L))))
+                .expectNext("ok")
+                .verifyComplete();
     }
 
     private void verifyNotificationsSentToSubscribedChats(Link link, List<Long> expectedChatIds) {
         when(chatService.getAllLinksAsBatchStream()).thenReturn(Stream.of(List.of(link)));
         when(gitHubClient.getNewNotifications(link.url(), link.lastModified()))
-                .thenReturn(Mono.just(new Notifications("New commit", Timestamp.valueOf("2024-02-22T10:00:00Z"))));
-        ArgumentCaptor<LinkUpdate> captor = ArgumentCaptor.forClass(LinkUpdate.class);
+                .thenReturn(Mono.just(new Notifications("New commit", Timestamp.valueOf("2024-02-22 10:00:00"))));
+        when(botClientHttp.postUpdates(any())).thenReturn(Mono.just("ok"));
 
         notificationService.checkNotifications();
 
-        verify(chatService, times(1)).updateLinkLastModifiedAt(link.id(), Timestamp.valueOf("2024-02-22T10:00:00Z"));
-        verify(botClientHttp, times(1)).postUpdates(captor.capture());
-        LinkUpdate linkUpdate = captor.getValue();
-        assertThat(linkUpdate.url()).isEqualTo(link.url());
-        assertThat(linkUpdate.tgChatIds()).containsExactlyElementsOf(expectedChatIds);
+        verify(chatService, times(1)).updateLinkLastModifiedAt(link.id(), Timestamp.valueOf("2024-02-22 10:00:00"));
+        StepVerifier.create(
+                        botClientHttp.postUpdates(new LinkUpdate(link.id(), link.url(), "New commit", expectedChatIds)))
+                .expectNext("ok")
+                .verifyComplete();
     }
 }

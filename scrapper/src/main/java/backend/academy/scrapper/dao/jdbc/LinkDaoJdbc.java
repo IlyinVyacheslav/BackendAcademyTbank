@@ -42,7 +42,8 @@ public class LinkDaoJdbc implements LinkDao {
     @Override
     public String getLinkUrlById(Long linkId) {
         String sql = "SELECT url FROM links WHERE link_id = :linkId";
-        return jdbcTemplate.queryForObject(sql, Map.of("linkId", linkId), String.class);
+        List<String> result = jdbcTemplate.query(sql, Map.of("linkId", linkId), (rs, rowNum) -> rs.getString("url"));
+        return result.isEmpty() ? null : result.getFirst();
     }
 
     @Override
