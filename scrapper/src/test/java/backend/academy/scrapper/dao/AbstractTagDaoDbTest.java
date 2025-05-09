@@ -24,7 +24,9 @@ public abstract class AbstractTagDaoDbTest extends DbTest {
 
     @BeforeEach
     public void createChatAndLink() {
-        jdbcTemplate.update("INSERT INTO chats (chat_id) VALUES (:chatId)", Map.of("chatId", chatId));
+        jdbcTemplate.update(
+                "INSERT INTO chats (chat_id, notification_mode) VALUES (:chatId, 'IMMEDIATE')",
+                Map.of("chatId", chatId));
         jdbcTemplate.update(
                 "INSERT INTO links (link_id, url) VALUES (1, 'https://www.google.com/')",
                 EmptySqlParameterSource.INSTANCE);
