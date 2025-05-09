@@ -35,6 +35,7 @@ app:
   pageSize: 50
   access-type: SQL
   message-transport: Kafka
+  digest-frequency: "0 0 10 * * ?"
 
   kafka:
     updates-topic: bot-updates

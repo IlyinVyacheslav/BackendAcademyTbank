@@ -5,11 +5,21 @@ CREATE SEQUENCE IF NOT EXISTS filter_id_seq START 1;
 CREATE SEQUENCE IF NOT EXISTS link_id_seq START 1;
 CREATE SEQUENCE IF NOT EXISTS tag_id_seq START 1;
 
+DO
+'
+BEGIN
+    CREATE TYPE notification_mode AS ENUM (''IMMEDIATE'', ''DIGEST'');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END;
+' LANGUAGE PLPGSQL;
+
 -- ================================================
 -- Таблица чатов
 -- ================================================
 CREATE TABLE IF NOT EXISTS chats (
-    chat_id BIGINT PRIMARY KEY
+    chat_id BIGINT PRIMARY KEY,
+    notification_mode notification_mode NOT NULL DEFAULT 'IMMEDIATE'
 );
 
 -- ================================================
