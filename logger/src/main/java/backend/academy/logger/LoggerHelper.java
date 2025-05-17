@@ -33,6 +33,10 @@ public class LoggerHelper {
         logWithContext(LOGGER.atWarn(), message, context);
     }
 
+    public void warn(String message) {
+        warn(message, Map.of());
+    }
+
     public void debug(String message, Map<String, Object> context) {
         logWithContext(LOGGER.atDebug(), message, context);
     }

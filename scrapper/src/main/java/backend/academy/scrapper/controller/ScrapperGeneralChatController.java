@@ -37,6 +37,12 @@ public class ScrapperGeneralChatController {
         return ResponseEntity.ok("Чат зарегистрирован");
     }
 
+    @PostMapping("/tg-chat/{id}/notification-mode")
+    public ResponseEntity<String> setNotificationMode(@PathVariable("id") Long id, @RequestBody String mode) {
+        chatService.setNotificationMode(id, mode);
+        return ResponseEntity.ok("Режим уведомлений изменён");
+    }
+
     @DeleteMapping("/tg-chat/{id}")
     public ResponseEntity<String> deleteChat(@PathVariable("id") Long id) {
         chatService.deleteChat(id);

@@ -7,32 +7,25 @@ import backend.academy.scrapper.clients.bot.BotClient;
 import backend.academy.scrapper.clients.web.GitHubClient;
 import backend.academy.scrapper.clients.web.StackOverflowClient;
 import backend.academy.scrapper.model.dto.Link;
+import backend.academy.scrapper.service.digest.DigestStorage;
+import backend.academy.scrapper.service.digest.NotificationMode;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ForkJoinPool;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class NotificationService {
     private final ChatService chatService;
     private final GitHubClient gitHubClient;
     private final StackOverflowClient stackOverflowClient;
     private final BotClient botClient;
-
-    @Autowired
-    public NotificationService(
-            ChatService chatService,
-            GitHubClient gitHubClient,
-            StackOverflowClient stackOverflowClient,
-            BotClient botClient) {
-        this.chatService = chatService;
-        this.gitHubClient = gitHubClient;
-        this.stackOverflowClient = stackOverflowClient;
-        this.botClient = botClient;
-    }
+    private final DigestStorage digestStorage;
 
     @Scheduled(fixedRate = 120_000)
     public void checkNotifications() {
@@ -73,11 +66,32 @@ public class NotificationService {
             try {
                 chatService.updateLinkLastModifiedAt(link.id(), updatedAt);
                 List<Long> chatsWithLinkId = chatService.getAllChatIdsByLinkId(link.id());
-                botClient
-                        .postUpdates(new LinkUpdate(link.id(), link.url(), resp.message(), chatsWithLinkId))
-                        .doOnError(error -> LoggerHelper.error("Error while sending update to tgBot", error))
-                        .doOnSuccess(res -> LoggerHelper.info("Update sent successfully", Map.of("response", res)))
-                        .subscribe();
+                List<Long> filteredChats = chatsWithLinkId.stream()
+                        .filter(chatId -> resp.user()
+                                .map(user -> {
+                                    List<String> filters = chatService.getFiltersByChatIdAndLinkId(chatId, link.id());
+                                    return !filters.contains(user);
+                                })
+                                .orElse(true))
+                        .toList();
+
+                Map<NotificationMode, List<Long>> chatsByMode =
+                        filteredChats.stream().collect(Collectors.groupingBy(chatService::getNotificationMode));
+
+                List<Long> immediateChats = chatsByMode.getOrDefault(NotificationMode.IMMEDIATE, List.of());
+                if (!immediateChats.isEmpty()) {
+                    botClient
+                            .postUpdates(new LinkUpdate(link.id(), link.url(), resp.message(), immediateChats))
+                            .doOnError(error -> LoggerHelper.error("Error while sending update to tgBot", error))
+                            .doOnSuccess(res -> LoggerHelper.info("Update sent successfully", Map.of("response", res)))
+                            .subscribe();
+                }
+
+                List<Long> digestChats = chatsByMode.getOrDefault(NotificationMode.DIGEST, List.of());
+                if (!digestChats.isEmpty()) {
+                    LinkUpdate digestUpdate = new LinkUpdate(link.id(), link.url(), resp.message(), digestChats);
+                    digestStorage.addToDigest(digestUpdate);
+                }
             } catch (Exception e) {
                 LoggerHelper.error("Error while updating and sending link", Map.of("link", link.url()), e);
             }

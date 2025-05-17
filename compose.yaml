@@ -32,6 +32,16 @@ services:
     networks:
       - backend
 
+  kafka:
+    image: apache/kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    volumes:
+      - /tmp/kafka-logs:/tmp/kraft-combined-logs
+    networks:
+      - backend
+
 networks:
   backend:
 

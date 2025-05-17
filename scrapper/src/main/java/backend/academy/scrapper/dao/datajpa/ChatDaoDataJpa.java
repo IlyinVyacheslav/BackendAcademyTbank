@@ -3,6 +3,7 @@ package backend.academy.scrapper.dao.datajpa;
 import backend.academy.scrapper.dao.ChatDao;
 import backend.academy.scrapper.dao.datajpa.repo.ChatRepo;
 import backend.academy.scrapper.model.entity.ChatEntity;
+import backend.academy.scrapper.service.digest.NotificationMode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
@@ -29,5 +30,18 @@ public class ChatDaoDataJpa implements ChatDao {
     public boolean removeChat(long chatId) {
         Long removedChats = chatRepo.deleteById(chatId);
         return removedChats != null && removedChats != 0;
+    }
+
+    @Override
+    public NotificationMode getNotificationMode(long chatId) {
+        return chatRepo.findById(chatId).map(ChatEntity::notificationMode).orElse(NotificationMode.IMMEDIATE);
+    }
+
+    @Override
+    public void setNotificationMode(long chatId, NotificationMode notificationMode) {
+        chatRepo.findById(chatId).ifPresent(chat -> {
+            chat.notificationMode(notificationMode);
+            chatRepo.save(chat);
+        });
     }
 }

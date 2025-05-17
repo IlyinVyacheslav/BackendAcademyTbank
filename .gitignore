@@ -24,3 +24,5 @@ dependency-reduced-pom.xml
 hs_err_pid*
 
 *.properties
+/bot/src/main/java/backend/academy/bot/controller/monitor/
+/scrapper/src/main/java/backend/academy/scrapper/clients/bot/monitor/

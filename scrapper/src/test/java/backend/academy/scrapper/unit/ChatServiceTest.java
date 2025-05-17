@@ -48,7 +48,8 @@ class ChatServiceTest {
     private FilterDao filterDao;
 
     @Spy
-    private ScrapperConfig config = new ScrapperConfig("token", null, 10, "SQL");
+    private ScrapperConfig config =
+            new ScrapperConfig("token", null, 10, "HTTP", "SQL", new ScrapperConfig.Kafka("topic", "dlq", 2));
 
     @InjectMocks
     private ChatService chatService;

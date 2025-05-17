@@ -153,6 +153,10 @@ public class BotService implements BotMessages {
                     .getLinksByTagAndTime(
                             getChatIdToLong(chatId), tagAndTime.tag(), Timestamp.valueOf(tagAndTime.time()))
                     .subscribe(response -> sendMessage(chatId, response.toString()));
+        } else if (replyText.contains(UPDATE_NOTIFICATION_MODE_MESSAGE)) {
+            scrapperClient
+                    .updateNotificationMode(getChatIdToLong(chatId), receivedText)
+                    .subscribe(response -> sendMessage(chatId, response));
         }
     }
 

@@ -1,10 +1,15 @@
 package backend.academy.bot.service.commands;
 
 import backend.academy.bot.clients.ScrapperClient;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class TrackCommand implements Command {
+    private final RedisTemplate<String, String> redisTemplate;
+
     @Override
     public boolean shouldBeReplied() {
         return true;
@@ -22,6 +27,7 @@ public class TrackCommand implements Command {
 
     @Override
     public String execute(ScrapperClient scrapperClient, Long chatId) {
+        redisTemplate.delete(String.valueOf(chatId));
         return SEND_LINK_MESSAGE;
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,4 +26,20 @@ public class LinkUpdate {
 
     @NotNull
     private List<Long> tgChatIds;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LinkUpdate that = (LinkUpdate) o;
+        return Objects.equals(id, that.id)
+                && Objects.equals(url, that.url)
+                && Objects.equals(description, that.description)
+                && Objects.equals(tgChatIds, that.tgChatIds);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, url, description, tgChatIds);
+    }
 }

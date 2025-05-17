@@ -12,8 +12,10 @@ import backend.academy.scrapper.dao.LinkDao;
 import backend.academy.scrapper.dao.TagDao;
 import backend.academy.scrapper.exc.ChatAlreadyExistsException;
 import backend.academy.scrapper.exc.ChatNotFoundException;
+import backend.academy.scrapper.exc.InvalidNotificationModeException;
 import backend.academy.scrapper.exc.LinkNotFoundException;
 import backend.academy.scrapper.model.dto.Link;
+import backend.academy.scrapper.service.digest.NotificationMode;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -138,5 +140,31 @@ public class ChatService {
 
     public List<Long> getAllChatIdsByLinkId(Long linkId) {
         return linkDao.getAllChatIdsByLinkId(linkId);
+    }
+
+    public List<String> getFiltersByChatIdAndLinkId(Long chatId, Long linkId) {
+        if (!chatDao.existsChat(chatId)) {
+            throw new ChatNotFoundException(chatId);
+        }
+        return filterDao.getFiltersByChatIdAndLinkId(chatId, linkId);
+    }
+
+    public NotificationMode getNotificationMode(Long chatId) {
+        if (!chatDao.existsChat(chatId)) {
+            throw new ChatNotFoundException(chatId);
+        }
+        return chatDao.getNotificationMode(chatId);
+    }
+
+    public void setNotificationMode(Long chatId, String notificationMode) {
+        if (!chatDao.existsChat(chatId)) {
+            throw new ChatNotFoundException(chatId);
+        }
+        try {
+            NotificationMode notificationModeEnum = NotificationMode.valueOf(notificationMode);
+            chatDao.setNotificationMode(chatId, notificationModeEnum);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidNotificationModeException(notificationMode);
+        }
     }
 }

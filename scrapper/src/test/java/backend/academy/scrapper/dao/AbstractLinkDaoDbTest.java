@@ -23,7 +23,9 @@ public abstract class AbstractLinkDaoDbTest extends DbTest {
     private long chatId = 387464794;
 
     private void addChatToDb(long chatId) {
-        jdbcTemplate.update("INSERT INTO chats (chat_id) VALUES (:chatId)", Map.of("chatId", chatId));
+        jdbcTemplate.update(
+                "INSERT INTO chats (chat_id, notification_mode) VALUES (:chatId, 'IMMEDIATE')",
+                Map.of("chatId", chatId));
     }
 
     private Long addLinkAndChatToDb() {

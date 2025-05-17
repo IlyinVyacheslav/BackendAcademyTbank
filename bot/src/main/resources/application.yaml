@@ -1,5 +1,7 @@
 app:
   telegram-token: ${TELEGRAM_TOKEN} # env variable
+  kafka:
+    updates-topic: bot-updates
 
 spring:
   application:
@@ -10,6 +12,11 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer.properties:
+      enable.auto.commit: false
+      auto.offset.reset: earliest
 
 server:
   port: 8080

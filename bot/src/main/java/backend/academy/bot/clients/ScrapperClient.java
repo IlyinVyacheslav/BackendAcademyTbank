@@ -60,6 +60,10 @@ public class ScrapperClient {
         return sendRequest(HttpMethod.POST, "/tg-chat/" + chatId, null, null, String.class);
     }
 
+    public Mono<String> updateNotificationMode(Long chatId, String mode) {
+        return sendRequest(HttpMethod.POST, "tg-chat/" + chatId + "/notification-mode", null, mode, String.class);
+    }
+
     public Mono<String> deleteChat(Long chatId) {
         return sendRequest(HttpMethod.DELETE, "/tg-chat/" + chatId, null, null, String.class);
     }

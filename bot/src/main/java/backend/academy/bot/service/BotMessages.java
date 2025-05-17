@@ -17,7 +17,10 @@ public interface BotMessages {
         /list - all following links
         /linksByTag - list of links by tag
         /linksByTagAndTime - list of links by tag from time
+        /changeNotificationMode - change notification mode
         """;
     String UNKNOWN_COMMAND = "Неизвестная команда. Введите /help";
     String EMPTY_LIST_MESSAGE = "Вы пока ничего не отслеживаете";
+    String UPDATE_NOTIFICATION_MODE_MESSAGE =
+            "Выберите режим получения уведомлений: IMMEDIATE - сразу или DIGEST - раз в сутки (по умолчанию IMMEDIATE)";
 }
