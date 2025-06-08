@@ -1,0 +1,27 @@
+app:
+  telegram-token: ${TELEGRAM_TOKEN} # env variable
+  kafka:
+    updates-topic: bot-updates
+
+spring:
+  application:
+    name: Bot
+  liquibase:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer.properties:
+      enable.auto.commit: false
+      auto.offset.reset: earliest
+
+server:
+  port: 8080
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui

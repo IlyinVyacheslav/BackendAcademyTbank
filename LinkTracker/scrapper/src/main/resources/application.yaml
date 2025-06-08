@@ -1,0 +1,43 @@
+spring:
+  application:
+    name: Scrapper
+  liquibase:
+    enabled: false
+  datasource:
+    url: jdbc:postgresql://localhost:5432/scrapper
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer.properties:
+      acks: 1
+  profiles:
+    active: ${app.access-type}
+
+server:
+  port: 8081
+
+springdoc:
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui
+
+app:
+  github-token: ${GITHUB_TOKEN} # env variable
+  stackoverflow:
+    key: ${SO_TOKEN_KEY}
+    access-token: ${SO_ACCESS_TOKEN}
+  pageSize: 50
+  access-type: SQL
+  message-transport: Kafka
+  digest-frequency: "0 0 10 * * ?"
+
+  kafka:
+    updates-topic: bot-updates
+    dlq-topic: bot-updates-dlq
+    partitions: 1
